@@ -368,11 +368,13 @@ bitmap_write (const struct bitmap *b, struct file *file)
 /* Debugging. */
 
 /* Dumps the contents of B to the console as hexadecimal. */
+/*
 void
 bitmap_dump (const struct bitmap *b) 
 {
   hex_dump (0, b->bits, byte_cnt (b->bit_cnt)/2, false);
 }
+*/
 
 struct bitmap *bitmap_expand(struct bitmap *bitmap, int size){
 	size_t i;

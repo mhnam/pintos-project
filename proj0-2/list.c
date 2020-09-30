@@ -581,8 +581,8 @@ void list_shuffle(struct list* list){
 
 	size_t elem_cnt;
 	size_t i;
-	struct listelem* tmp_elem1;
-	struct listelem* tmp_elem2;
+	struct list_elem* tmp_elem1;
+	struct list_elem* tmp_elem2;
 
 	srand(time(NULL));
 	elem_cnt = list_size(list);

@@ -11,7 +11,7 @@ list.o: list.c list.h
 hash.o: hash.c hash.h
 	$(CC) -c hash.c $(CFLAGS)
 
-bitmap.o: bitmap.c bitmap.h stdio.c limits.h round.h
+bitmap.o: bitmap.c bitmap.h limits.h round.h hex_dump.h
 	$(CC) -c bitmap.c $(CFLAGS)
 
 testlib.o: testlib.c testlib.h list.h hash.h bitmap.h
