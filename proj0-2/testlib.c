@@ -45,7 +45,7 @@ void create(struct request req, struct new_data* new, int new_cnt){
 	for (i = 0; i < new_cnt; i++) { /*chk whether given name is valid*/
 		if ((strcmp(req.token[2], new[i].name) == 0) && new[i].exist == 1) {
 			fl = -1;
-			return false;
+			break;
 		}
 	}
 
@@ -61,7 +61,7 @@ void create(struct request req, struct new_data* new, int new_cnt){
 			new->type = 1;
 			strcpy(new->name, req.token[2]);
 			new->data = malloc(sizeof(struct hash));
-			hash_init((struct hash*)new->data, hash_func, hash_less, NULL);
+//			hash_init((struct hash*)new->data, hash_func, hash_less, NULL);
 			new->exist = 1;
 		}
 		else if (strcmp(req.token[1], "bitmap") == 0) {
@@ -96,7 +96,7 @@ void dumpdata(struct request req, struct new_data* new, int new_cnt){
 	if (fl) {
 		switch(type){
 			case 0: /*list*/
-				for(tmp_elem = list_begin((struct list*)new[i].data); tmp_elem != list_end(struct list*)new[i].data; tmp_elem = list_next(tmp_elem)){
+				for(tmp_elem = list_begin((struct list*)new[i].data); tmp_elem != list_end((struct list*)new[i].data; tmp_elem = list_next(tmp_elem)){
 					tmp_listitem = list_entry(tmp_elem, struct list_item, elem);
 					fprintf(stdout, "%d ", tmp_listitem->data);
 					cnt++;
@@ -120,7 +120,7 @@ void dumpdata(struct request req, struct new_data* new, int new_cnt){
 				tmp_bit = new[i].data;
 				size = bitmap_size(tmp_bit);
 				for(i = 0; i < (int)size; i++){
-					if(bitmap_test(bit, i))
+					if(bitmap_test(tmp_bit, i))
 						fprintf(stdout, "1");
 					else
 						fprintf(stdout, "0");
@@ -143,7 +143,7 @@ void delete(struct request req, struct new_data* new, int new_cnt){
 	int type;
 
 	for(i = 0; i < new_cnt; i++){
-		if(strcmp(dt[i].name, com.token[1]) == 0){
+		if(strcmp(new[i].name, req.token[1]) == 0){
 			new[i].exist = 0;
 			fl = 1;
 			type = new[i].type;
@@ -164,7 +164,7 @@ void delete(struct request req, struct new_data* new, int new_cnt){
 				
 			case 1:
 				tmp_hash = (struct hash*)new[i].data;
-				hash_destroy(tmp_hash, hash_action_destructor);			
+//				hash_destroy(tmp_hash, hash_action_destructor);			
 				break;
 				
 			case 2:
