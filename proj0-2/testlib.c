@@ -1,12 +1,9 @@
-#include "main.h"
-
-#define MAX_INPUT_SIZE 500
-#define MAX_REQUEST_TOKEN 20
+#include "testlib.h"
 
 int main(){
 	struct request req;
 	static char input[MAX_INPUT_SIZE]; /*array for input sting*/
-	new_data* new = (new_data*)malloc(sizeof(new_data));
+	struct new_data* new = (struct new_data*)malloc(sizeof(struct new_data));
 	int new_cnt = 0;
 	int i;
 	
@@ -21,27 +18,27 @@ int main(){
 			req.token[++req.cnt] = strtok(NULL, " \t\n");
 		}
 		
-		if(strcmp(com.token[0], "create")==0){
-			new = (new_data*)realloc(new, sizeof(new_data)*(new_cnt + 2)); /*add one extra space for data that will be added later*/
+		if(strcmp(req.token[0], "create")==0){
+			new = (struct new_data*)realloc(new, sizeof(struct new_data)*(new_cnt + 2)); /*add one extra space for data that will be added later*/
 			create(req, &new[new_cnt], new_cnt);
 			new_cnt++;
 		}
-		else if(strcmp(com.token[0], "dumpdata")==0){
-			dumpdata(com, new, new_cnt);
+		else if(strcmp(req.token[0], "dumpdata")==0){
+			dumpdata(req, new, new_cnt);
 		}
-		else if(strcmp(com.token[0], "delete")==0){
-			delete(com, new, new_cnt);
+		else if(strcmp(req.token[0], "delete")==0){
+			delete(req, new, new_cnt);
 		}
-		else if(strcmp(com.token[0], "quit")==0){
+		else if(strcmp(req.token[0], "quit")==0){
 			delete_all(new, new_cnt);
-			free(new_data);
+			free(new);
 			break;
 		}
 	}
 	return 0;
 }
 
-void create(struct request req, new_data* new, int new_cnt){
+void create(struct request req, struct new_data* new, int new_cnt){
 	size_t size;
 	int i;
 	int fl = 1;
@@ -77,7 +74,7 @@ void create(struct request req, new_data* new, int new_cnt){
 	}
 }
 
-void dumpdata(struct request req, new_data* new, int new_cnt){
+void dumpdata(struct request req, struct new_data* new, int new_cnt){
 	struct list_elem* tmp_elem;
 	struct list_item* tmp_listitem;
 	struct hash_iterator* iter = malloc(sizeof(struct hash_iterator));
@@ -135,7 +132,7 @@ void dumpdata(struct request req, new_data* new, int new_cnt){
 	}
 }
 
-void delete(struct request req, new_data* new, int new_cnt){
+void delete(struct request req, struct new_data* new, int new_cnt){
 	struct list* tmp_list;
 	struct list_elem* tmp_elem;
 	struct list_item* tmp_listitem;
@@ -178,7 +175,7 @@ void delete(struct request req, new_data* new, int new_cnt){
 	}
 }
 
-void delete_all(new_data* new, int new_cnt) {
+void delete_all(struct new_data* new, int new_cnt) {
 	struct list* tmp_list;
 	struct list_elem* tmp_elem;
 	struct list_item* tmp_listitem;
