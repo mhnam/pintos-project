@@ -3,7 +3,7 @@
 int main(){
 	struct request req;
 	static char input[MAX_INPUT_SIZE]; /*array for input sting*/
-	struct new_data* new = (struct new_data*)malloc(sizeof(struct new_data));
+	struct new_data* new[MAX_DATA_STRUCTURE_NUM];
 	int new_cnt = 0;
 	int i;
 	int fl = 1;
@@ -27,7 +27,7 @@ int main(){
 				}
 			}
 			if (fl){
-				new = (struct new_data*)realloc(new, sizeof(struct new_data)*(new_cnt+2)); /*add one extra space for data that will be added later*/
+//				new = (struct new_data*)realloc(new, sizeof(struct new_data)*(new_cnt+2)); /*add one extra space for data that will be added later*/
 				create(req, &new[new_cnt++]);
 			}
 			else if (fl == -1)

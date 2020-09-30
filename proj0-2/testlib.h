@@ -7,6 +7,7 @@
 
 #define MAX_INPUT_SIZE 500
 #define MAX_REQUEST_TOKEN 20
+#define MAX_DATA_STRUCTURE_NUM 30
 
 struct request{
 	int cnt;
