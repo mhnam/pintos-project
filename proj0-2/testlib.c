@@ -3,7 +3,8 @@
 int main(){
 	struct request req;
 	static char input[MAX_INPUT_SIZE]; /*array for input sting*/
-	struct new_data* new = (struct new_data*)malloc(sizeof(struct new_data));
+	struct new_data* new=(struct new_data*)malloc(sizeof(struct new_data));
+//	struct new_data* new = (struct new_data*)malloc(sizeof(struct new_data));
 	int new_cnt = 0;
 	int i;
 	int fl = 1;
@@ -20,19 +21,27 @@ int main(){
 		}
 		
 		if(strcmp(req.token[0], "create")==0){
-			for (i = 0; i < new_cnt; i++) { /*chk whether given name is valid*/
+			new=(struct new_data*)realloc(new, sizeof(struct new_data)*(new_cnt+2));
+			create(req, &new[new_cnt], new_cnt);
+			new_cnt++;
+		}
+
+		
+		/*
+		if(strcmp(req.token[0], "create")==0){
+			for (i = 0; i < new_cnt; i++) { 
 				if ((strcmp(req.token[2], new[i].name) == 0) && new[i].exist == 1) {
 					fl = -1;
 					break;
 				}
 			}
 			if (fl){
-				new = (struct new_data*)realloc(new, sizeof(struct new_data)*(new_cnt+2)); /*add one extra space for data that will be added later*/
+				new = (struct new_data*)realloc(new, sizeof(struct new_data)*(new_cnt+2)); 
 				create(req, &new[new_cnt++]);
 			}
 			else if (fl == -1)
 				break;
-		}
+		}*/
 		else if(strcmp(req.token[0], "dumpdata")==0){
 			dumpdata(req, new, new_cnt);
 		}
@@ -48,6 +57,54 @@ int main(){
 	return 0;
 }
 
+create(struct request req, struct new_data* new, int new_cnt){
+	size_t size;
+	int i;
+	int type;
+	int flag = 1;
+	for (i = 0; i < new_cnt; i++) {
+		if ((strcmp(req.token[2], new[i].name) == 0)&&new[i].exist==1) {
+			if (strcmp(req.token[1], "list") == 0) {
+				type = 0;
+			}
+			else if (strcmp(req.token[1], "hashtable") == 0) {
+				type = 1;
+			}
+			else if (strcmp(req.token[1], "bitmap") == 0) {
+				type = 2;
+			}
+			break;
+		}
+	}
+	if(new[i].type==type){
+		flag=0;
+	}
+	if (flag == 1) {
+		if (strcmp(req.token[1], "list") == 0) {
+			new->type = 0;
+			strcpy(new->name, com.token[2]);
+			new->data = malloc(sizeof(struct list));
+			list_init((struct list*)new->data);
+			new->exist = 1;
+		}
+		else if (strcmp(req.token[1], "hashtable") == 0) {
+			new->type = 1;
+			strcpy(new->name, req.token[2]);
+			new->data = malloc(sizeof(struct hash));
+//			hash_init((struct hash*)new->data, hash_func, hash_less, NULL);
+			new->exist = 1;
+		}
+		else if (strcmp(req.token[1], "bitmap") == 0) {
+			new->type = 2;
+			strcpy(new->name, req.token[2]);
+			size = atoi(req.token[3]);
+			new->data = bitmap_create(size);
+			new->exist = 1;
+		}
+	}
+}
+
+/*
 void create(struct request req, struct new_data* new){
 	size_t size;
 	int i;
@@ -74,7 +131,7 @@ void create(struct request req, struct new_data* new){
 		new->exist = 1;
 	}
 }
-
+*/
 void dumpdata(struct request req, struct new_data* new, int new_cnt){
 	struct list_elem* tmp_elem;
 	struct list_item* tmp_listitem;
