@@ -96,7 +96,7 @@ void dumpdata(struct request req, struct new_data* new, int new_cnt){
 	if (fl) {
 		switch(type){
 			case 0: /*list*/
-				for(tmp_elem = list_begin((struct list*)new[i].data); tmp_elem != list_end((struct list*)new[i].data; tmp_elem = list_next(tmp_elem)){
+				for(tmp_elem = list_begin((struct list*)new[i].data); tmp_elem != list_end((struct list*)new[i].data); tmp_elem = list_next(tmp_elem)){
 					tmp_listitem = list_entry(tmp_elem, struct list_item, elem);
 					fprintf(stdout, "%d ", tmp_listitem->data);
 					cnt++;

@@ -1,21 +1,24 @@
-CC = gcc
-CFLAGS = -W -Wall
-TARGET = testlib
+CC=gcc
+CFLAGS=-g
+OBJECTS=list.o hash.o bitmap.o testlib.o
+TARGET=testlib
 
-$(TARGET): testlib.o list.o bitmap.o hash.o
-	   $(CC) $(CFLAGS) -o $(TARGET) testlib.o list.o bitmap.o hash.o
-
-testlib.o: testlib.c testlib.h list.c list.h bitmap.c bitmap.h hash.c hash.h
-	$(CC) $(CFLAGS) -c -o testlib.o testlib.c
+all: $(TARGET)
 
 list.o: list.c list.h
-	$(CC) $(CFLAGS) -c -o list.o list.c
-
-bitmap.o: bitmap.c bitmap.h
-	$(CC) $(CFLAGS) -c -o bitmap.o bitmap.c
+	$(CC) -c list.c $(CFLAGS)
 
 hash.o: hash.c hash.h
-	$(CC) $(CFLAGS) -c -o hash.o hash.c
+	$(CC) -c hash.c $(CFLAGS)
+
+bitmap.o: bitmap.c bitmap.h stdio.c limits.h round.h
+	$(CC) -c bitmap.c $(CFLAGS)
+
+testlib.o: testlib.c testlib.h list.h hash.h bitmap.h
+	$(CC) -c testlib.c $(CFLAGS)
+
+$(TARGET): $(OBJECTS)
+	$(CC) -o $(TARGET) $(OBJECTS) $(CFLAGS)
 
 clean:
-	rm *.o testlib
+	rm -rf $(OBJECTS) $(TARGET)

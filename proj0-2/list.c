@@ -590,6 +590,6 @@ void list_shuffle(struct list* list){
 	for(i = 0; i < elem_cnt; ++i){
 		tmp_elem1 = nth_elem(list, rand()%elem_cnt);
 		tmp_elem2 = nth_elem(list, rand()%elem_cnt);
-		list_swap(tmp)
+		list_swap(tmp_elem1, tmp_elem2);
 	}
 }
