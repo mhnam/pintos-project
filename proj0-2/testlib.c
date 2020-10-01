@@ -7,6 +7,8 @@ int main(){
 	int new_cnt = 0;
 	int i;
 	int fl = 1;
+	int tmploc1 tmploc2 tmpdata;
+	struct list_item* tmplistitem;
 	
 	//initialise()
 
@@ -46,6 +48,28 @@ int main(){
 			delete_all(new, new_cnt);
 			free(new);
 			break;
+		}
+
+		else is(strcmp(req.token[0], "list_push_back")==0){
+			for(i = 0, i < MAX_DATA_STRUCTURE_NUM; i++){
+				if(new[i].exist == 1 && strcmp(new[i].name, req.token[1]==0)){
+					tmplistitem = (struct list_item*)malloc(sizeof(struct list_item));
+					tmplistitem->data = atoi(req.token[2]);
+					list_push_back(new[i].data, (struct list_elem*)tmplistitem);
+				}
+					
+			}
+		}
+
+		else is(strcmp(req.token[0], "list_push_front")==0){
+			for(i = 0, i < MAX_DATA_STRUCTURE_NUM; i++){
+				if(new[i].exist == 1 && strcmp(new[i].name, req.token[1]==0)){
+					tmplistitem = (struct list_item*)malloc(sizeof(struct list_item));
+					tmplistitem->data = atoi(req.token[2]);
+					list_push_front(new[i].data, (struct list_elem*)tmplistitem);
+				}
+					
+			}
 		}
 	}
 	return 0;
