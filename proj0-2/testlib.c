@@ -3,7 +3,7 @@
 int main(){
 	struct request req;
 	static char input[MAX_INPUT_SIZE]; /*array for input sting*/
-	struct new_data* new[MAX_DATA_STRUCTURE_NUM];
+	struct new_data new[MAX_DATA_STRUCTURE_NUM];
 	int new_cnt = 0;
 	int i;
 	int fl = 1;
@@ -20,15 +20,16 @@ int main(){
 		}
 		
 		if(strcmp(req.token[0], "create")==0){
-			for (i = 0; i < new_cnt; i++) { /*chk whether given name is valid*/
+			for (i = 0; i < MAX_DATA_STRUCTURE_NUM; i++) { /*chk whether given name is valid*/
 				if ((strcmp(req.token[2], new[i].name) == 0) && new[i].exist == 1) {
 					fl = -1;
 					break;
 				}
 			}
-			if (fl){
+			if (fl == 1){
 //				new = (struct new_data*)realloc(new, sizeof(struct new_data)*(new_cnt+2)); /*add one extra space for data that will be added later*/
-				create(req, &new[new_cnt++]);
+				create(req, &new[new_cnt]);
+				new_cnt++;
 			}
 			else if (fl == -1)
 				break;
