@@ -15,8 +15,10 @@ int main(){
 		req.cnt = 0;
 		req.token[req.cnt] = strtok(input, " \t\n");
 		
-		while(req.token[req.cnt]==NULL){
+		while(1){
 			req.token[++req.cnt] = strtok(NULL, " \t\n");
+			if(req.token[req.cnt]==NULL)
+				break;
 		}
 		
 		if(strcmp(req.token[0], "create")==0){
