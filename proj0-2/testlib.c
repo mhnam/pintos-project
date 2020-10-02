@@ -10,6 +10,7 @@ int main(){
 	int fl = 1;
 	int tmploc1, tmploc2, tmpdata;
 	struct list_item* new_listitem;
+	struct list_elem* tmp_listelem1, tmp_listelem2, tmp_listelem3;
 	
 	//initialise()
 
@@ -44,7 +45,7 @@ int main(){
 			if(i > -1){
 				new_listitem = malloc(sizeof(struct list_item));
 				new_listitem->data = atoi(req.token[2]);
-				list_push_back((struct list*)new[i].data, (struct list_elem*)new_listitem);			
+				list_push_back((struct list*)new[i].data, (struct list_elem*)new_listitem);
 			}
 		}
 
@@ -53,10 +54,82 @@ int main(){
 			if(i > -1){
 				new_listitem = malloc(sizeof(struct list_item));
 				new_listitem->data = atoi(req.token[2]);
-				list_push_back((struct list*)new[i].data, (struct list_elem*)new_listitem);			
+				list_push_front((struct list*)new[i].data, (struct list_elem*)new_listitem);
 			}
 		}
-	}
+		
+		else if(strcmp(req.token[0], "list_insert")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				new_listitem = malloc(sizeof(struct list_item));
+				new_listitem->data = atoi(req.token[3]);
+				list_insert(nth_elem((struct list*)new[i].data, atoi(req.token[2])), (struct list_elem*)new_listitem);
+			}
+		}
+
+		else if(strcmp(req.token[0], "list_insert_ordered")==0){
+			//to be done
+			}
+		}
+		
+		else if(strcmp(req.token[0], "list_empty")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				if(list_empty(new[i].data))
+					fprintf(stdout, "true\n");
+				else
+					fprintf(stdout, "false\n");
+			}
+		}
+	
+		else if(strcmp(req.token[0], "list_size")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				fprintf(stdout, "%zu\n", list_size(new[i].data));
+			}
+		}
+	
+		else if(strcmp(req.token[0], "list_max")==0){
+			//to be done (require list_less function)
+		}
+	
+		else if(strcmp(req.token[0], "list_min")==0){
+			//to be done (require list_less function)
+		}
+	
+		else if(strcmp(req.token[0], "list_pop_front")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				tmp_listelem1 = list_pop_front(new[i].data);
+				free(list_entry(tmp_listelem1, struct list_item, elem));
+			}
+		}
+	
+		else if(strcmp(req.token[0], "list_pop_back")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				tmp_listelem1 = list_pop_back(new[i].data);
+				free(list_entry(tmp_listelem1, struct list_item, elem));
+			}
+		}
+
+		else if(strcmp(req.token[0], "list_push_front")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				new_listitem = malloc(sizeof(struct list_item));
+				new_listitem->data = atoi(req.token[2]);
+				list_push_front(new[i].data, (struct list_elem*)new_listitem);
+			}
+		}
+
+		else if(strcmp(req.token[0], "list_push_back")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				new_listitem = malloc(sizeof(struct list_item));
+				new_listitem->data = atoi(req.token[2]);
+				list_push_back(new[i].data, (struct list_elem*)new_listitem);
+			}
+		}
 	
 	return 0;
 }

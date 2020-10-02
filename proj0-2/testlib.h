@@ -14,7 +14,7 @@ struct request{
 	char* token[MAX_REQUEST_TOKEN];
 };
 
-typedef struct new_data{
+struct new_data{
 	int type;
 	char name[100];
 	void* data;
