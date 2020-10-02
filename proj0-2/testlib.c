@@ -196,8 +196,6 @@ int main(){
 				}
 			}
 		}
-		
-		else if()
 	}
 	
 	return 0;
