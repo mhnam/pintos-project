@@ -175,7 +175,7 @@ int main(){
 		
 		else if(strcmp(req.token[0], "list_swap")==0){
 			i = namecheck(req.token[1]);
-			if(i > -1){
+			if(i > -1 && atoi(req.token[2])<list_size(new[i].data) && atoi(req.token[3])<list_size(new[i].data)){
 				tmp_listelem1 = nth_elem(new[i].data, atoi(req.token[2]));
 				tmp_listelem2 = nth_elem(new[i].data, atoi(req.token[3]));
 				list_swap(tmp_listelem1, tmp_listelem2);

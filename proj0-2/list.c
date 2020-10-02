@@ -550,27 +550,25 @@ void list_swap(struct list_elem *a, struct list_elem *b){
 		tmp_prev = a->prev;
 		tmp_next = b->next;
 		b->prev = tmp_prev;
-		a->next = tmp_next;
-		a->prev = b;
-		b->next = a;
-		
 		if(tmp_prev)
 			tmp_prev->next = b;
+		a->next = tmp_next;
 		if(tmp_next)
-			tmp_next->prev = a;
+			tmp_next->prev = a;		
+		a->prev = b;
+		b->next = a;
 	}
 	else if(b->next == a){ /*case when elem b and a are sorted sequentially*/
 		tmp_prev = b->prev;
 		tmp_next = a->next;
 		a->prev = tmp_prev;
-		b->next = tmp_next;
-		b->prev = a;
-		a->next = b;
-		
 		if(tmp_prev)
 			tmp_prev->next = b;
+		b->next = tmp_next;
 		if(tmp_next)
-			tmp_next->prev = a;
+			tmp_next->prev = a;		
+		b->prev = a;
+		a->next = b;
 	}
 	else{ /*case when there are multiple elems in between elem a and b*/
 		a_prev = a->prev;
@@ -600,7 +598,7 @@ struct list_elem* nth_elem(struct list* list, size_t n){
 
 	for(i = 0, tmp = list_begin(list); i < n && tmp != list_end(list); ++i, tmp = list_next(tmp));
 
-	ASSERT(i == n);
+	ASSERT(i == n); /*no n-th element in the list*/
 	
 	return tmp;
 }
@@ -608,17 +606,15 @@ struct list_elem* nth_elem(struct list* list, size_t n){
 void list_shuffle(struct list* list){
 	ASSERT(list);
 
-	size_t elem_cnt;
 	size_t i;
 	struct list_elem* tmp_elem1;
 	struct list_elem* tmp_elem2;
 
 	srand(time(NULL));
-	elem_cnt = list_size(list);
 
-	for(i = 0; i < elem_cnt; ++i){
-		tmp_elem1 = nth_elem(list, rand()%elem_cnt);
-		tmp_elem2 = nth_elem(list, rand()%elem_cnt);
+	for(i = 0; i < list_size(list); ++i){
+		tmp_elem1 = nth_elem(list, rand() % list_size(list));
+		tmp_elem2 = nth_elem(list, rand() % list_size(list));
 		list_swap(tmp_elem1, tmp_elem2);
 	}
 }
