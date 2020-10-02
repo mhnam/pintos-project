@@ -4,6 +4,7 @@
 #include "list.h"
 #include "hash.h"
 #include "bitmap.h"
+#include "hex_dump.h"
 
 #define MAX_INPUT_SIZE 500
 #define MAX_REQUEST_TOKEN 20

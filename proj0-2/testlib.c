@@ -39,7 +39,7 @@ int main(){
 		
 		else if(strcmp(req.token[0], "quit")==0){
 			delete_all();
-			free(new);
+			//free(new);
 			break;
 		}
 
