@@ -1,14 +1,15 @@
 #include "testlib.h"
 
+static struct new_data new[MAX_DATA_STRUCTURE_NUM];
+static int new_cnt = 0;
+
 int main(){
 	struct request req;
 	static char input[MAX_INPUT_SIZE]; /*array for input sting*/
-	struct new_data new[MAX_DATA_STRUCTURE_NUM];
-	int new_cnt = 0;
 	int i;
 	int fl = 1;
-	int tmploc1 tmploc2 tmpdata;
-	struct list_item* tmplistitem;
+	int tmploc1, tmploc2, tmpdata;
+	struct list_item* new_listitem;
 	
 	//initialise()
 
@@ -23,105 +24,102 @@ int main(){
 				break;
 		}
 		
-		if(strcmp(req.token[0], "create")==0){
-			for (i = 0; i < MAX_DATA_STRUCTURE_NUM; i++) { /*chk whether given name is valid*/
-				if ((strcmp(req.token[2], new[i].name) == 0) && new[i].exist == 1) {
-					fl = -1;
-					break;
-				}
-			}
-			if (fl == 1){
-//				new = (struct new_data*)realloc(new, sizeof(struct new_data)*(new_cnt+2)); /*add one extra space for data that will be added later*/
-				create(req, &new[new_cnt]);
-				new_cnt++;
-			}
-			else if (fl == -1)
-				break;
-		}
-		else if(strcmp(req.token[0], "dumpdata")==0){
-			dumpdata(req, new, new_cnt);
-		}
-		else if(strcmp(req.token[0], "delete")==0){
-			delete(req, new, new_cnt);
-		}
+		if(strcmp(req.token[0], "create")==0)
+			create(req);
+		
+		else if(strcmp(req.token[0], "dumpdata")==0)
+			dumpdata(req);
+		
+		else if(strcmp(req.token[0], "delete")==0)
+			delete(req);
+		
 		else if(strcmp(req.token[0], "quit")==0){
-			delete_all(new, new_cnt);
+			delete_all();
 			free(new);
 			break;
 		}
 
-		else is(strcmp(req.token[0], "list_push_back")==0){
-			for(i = 0, i < MAX_DATA_STRUCTURE_NUM; i++){
-				if(new[i].exist == 1 && strcmp(new[i].name, req.token[1]==0)){
-					tmplistitem = (struct list_item*)malloc(sizeof(struct list_item));
-					tmplistitem->data = atoi(req.token[2]);
-					list_push_back(new[i].data, (struct list_elem*)tmplistitem);
-				}
-					
+		else if(strcmp(req.token[0], "list_push_back")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				new_listitem = malloc(sizeof(struct list_item));
+				new_listitem->data = atoi(req.token[2]);
+				list_push_back((struct list*)new[i].data, (struct list_elem*)new_listitem);			
 			}
 		}
 
-		else is(strcmp(req.token[0], "list_push_front")==0){
-			for(i = 0, i < MAX_DATA_STRUCTURE_NUM; i++){
-				if(new[i].exist == 1 && strcmp(new[i].name, req.token[1]==0)){
-					tmplistitem = (struct list_item*)malloc(sizeof(struct list_item));
-					tmplistitem->data = atoi(req.token[2]);
-					list_push_front(new[i].data, (struct list_elem*)tmplistitem);
-				}
-					
+		else if(strcmp(req.token[0], "list_push_front")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				new_listitem = malloc(sizeof(struct list_item));
+				new_listitem->data = atoi(req.token[2]);
+				list_push_back((struct list*)new[i].data, (struct list_elem*)new_listitem);			
 			}
 		}
 	}
+	
 	return 0;
 }
 
-void create(struct request req, struct new_data* new){
-	size_t size;
+int namecheck(char* name){
 	int i;
+	int fl = -1;
 	
-	if (strcmp(req.token[1], "list") == 0) {
-		new->type = 0;
-		strcpy(new->name, req.token[2]);
-		new->data = malloc(sizeof(struct list));
-		list_init((struct list*)new->data);
-		new->exist = 1;
+	for (i = 0; i < MAX_DATA_STRUCTURE_NUM; i++) {
+		if ((strcmp(name, new[i].name) == 0) && new[i].exist == 1) {
+			fl = i;
+			break;
+		}
 	}
-	else if (strcmp(req.token[1], "hashtable") == 0) {
-		new->type = 1;
-		strcpy(new->name, req.token[2]);
-		new->data = malloc(sizeof(struct hash));
-//			hash_init((struct hash*)new->data, hash_func, hash_less, NULL);
-		new->exist = 1;
-	}
-	else if (strcmp(req.token[1], "bitmap") == 0) {
-		new->type = 2;
-		strcpy(new->name, req.token[2]);
-		size = atoi(req.token[3]);
-		new->data = bitmap_create(size);
-		new->exist = 1;
+	return fl;
+}
+
+void create(struct request req){
+	size_t size;
+	int fl;
+	
+	fl = namecheck(req.token[2]);
+	if(fl == -1){
+		new_cnt++;
+		if (strcmp(req.token[1], "list") == 0) {
+			new[new_cnt]->type = 0;
+			strcpy(new[new_cnt]->name, req.token[2]);
+			new[new_cnt]->data = malloc(sizeof(struct list));
+			list_init((struct list*)new[new_cnt]->data);
+			new[new_cnt]->exist = 1;
+		}
+		else if (strcmp(req.token[1], "hashtable") == 0) {
+			new[new_cnt]->type = 1;
+			strcpy(new[new_cnt]->name, req.token[2]);
+			new[new_cnt]->data = malloc(sizeof(struct hash));
+	//			hash_init((struct hash*)new->data, hash_func, hash_less, NULL);
+			new->exist = 1;
+		}
+		else if (strcmp(req.token[1], "bitmap") == 0) {
+			new[new_cnt]->type = 2;
+			strcpy(new[new_cnt]->name, req.token[2]);
+			size = atoi(req.token[3]);
+			new[new_cnt]->data = bitmap_create(size);
+			new[new_cnt]->exist = 1;
+		}
 	}
 }
 
-void dumpdata(struct request req, struct new_data* new, int new_cnt){
+void dumpdata(struct request req){
 	struct list_elem* tmp_elem;
 	struct list_item* tmp_listitem;
 	struct hash_iterator* iter = malloc(sizeof(struct hash_iterator));
 	struct hash_item* tmp_hashitem;
 	struct bitmap* tmp_bit;
 	int i;
-	int type = -1;
+	int type;
 	int cnt = 0;
-	int fl = -1;
 	size_t size;
 	
-	for(i = 0; i < new_cnt; i++){ /*find whether given varialbe exist*/
-		if(strcmp(new[i].name, req.token[1]) == 0){
-			type = new[i].type;
-			fl = 1;
-			break;
-		}
-	}
-	if (fl) {
+	i = namecheck(req.token[1]);
+	
+	if(i > -1){
+		type = new[i].type;	
 		switch(type){
 			case 0: /*list*/
 				for(tmp_elem = list_begin((struct list*)new[i].data); tmp_elem != list_end((struct list*)new[i].data); tmp_elem = list_next(tmp_elem)){
@@ -147,8 +145,8 @@ void dumpdata(struct request req, struct new_data* new, int new_cnt){
 			case 2: /*bitmap*/
 				tmp_bit = new[i].data;
 				size = bitmap_size(tmp_bit);
-				for(i = 0; i < (int)size; i++){
-					if(bitmap_test(tmp_bit, i))
+				for(cnt = 0; cnt < (int)size; cnt++){
+					if(bitmap_test(tmp_bit, cnt))
 						fprintf(stdout, "1");
 					else
 						fprintf(stdout, "0");
@@ -160,7 +158,7 @@ void dumpdata(struct request req, struct new_data* new, int new_cnt){
 	}
 }
 
-void delete(struct request req, struct new_data* new, int new_cnt){
+void delete(struct request req){
 	struct list* tmp_list;
 	struct list_elem* tmp_elem;
 	struct list_item* tmp_listitem;
@@ -169,16 +167,12 @@ void delete(struct request req, struct new_data* new, int new_cnt){
 	int i;
 	int fl = -1;
 	int type;
-
-	for(i = 0; i < new_cnt; i++){
-		if(strcmp(new[i].name, req.token[1]) == 0){
-			new[i].exist = 0;
-			fl = 1;
-			type = new[i].type;
-			break;
-		}
-	}
-	if (fl) {
+	
+	i = namecheck(req.token[1]);
+	if(i > -1){
+		new[i].exist = 0;
+		type = new[i].type;
+		
 		switch(type){
 			case 0:
 				tmp_list = (struct list*)new[i].data;
@@ -203,7 +197,7 @@ void delete(struct request req, struct new_data* new, int new_cnt){
 	}
 }
 
-void delete_all(struct new_data* new, int new_cnt) {
+void delete_all(void) {
 	struct list* tmp_list;
 	struct list_elem* tmp_elem;
 	struct list_item* tmp_listitem;
@@ -212,7 +206,7 @@ void delete_all(struct new_data* new, int new_cnt) {
 	int i;
 	int type;
 
-	for (i = 0; i < new_cnt; i++) {
+	for (i = 0; i < MAX_DATA_STRUCTURE_NUM; i++) {
 		if (new[i].exist == 1) {
 			type = new[i].type;
 			switch(type){

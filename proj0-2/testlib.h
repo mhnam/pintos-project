@@ -21,7 +21,8 @@ typedef struct new_data{
 	int exist;
 };
 
-void create(struct request req, struct new_data* new);
-void dumpdata(struct request req, struct new_data* new, int new_cnt);
-void delete(struct request req, struct new_data* new, int new_cnt);
-void delete_all(struct new_data* new, int new_cnt);
+int namecheck(char* name);
+void create(struct request req);
+void dumpdata(struct request req);
+void delete(struct request req);
+void delete_all();
