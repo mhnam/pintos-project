@@ -9,6 +9,7 @@ int main(){
 	int i, j, k, l;
 	int fl = 1;
 	int tmploc1, tmploc2, tmpdata;
+	size_t size;
 	struct list_item* new_listitem;
 	struct list_elem* tmp_listelem1;
 	struct list_elem* tmp_listelem2;
@@ -196,6 +197,86 @@ int main(){
 				}
 			}
 		}
+		
+		else if(strcmp(req.token[0], "bitmap_mark")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				bitmap_mark(new[i].data, atoi(req.token[2]));
+			}
+		}
+		
+		else if(strcmp(req.token[0], "bitmap_all")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				j = bitmap_all(new[i].data, atoi(req.token[2]), atoi(req.token[3]));
+				if(j == 1)
+					fprintf(stdout, "true\n");
+				else if(j == 0)
+					fprintf(stdout, "false\n");
+			}
+		}
+
+		else if(strcmp(req.token[0], "bitmap_any")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				j = bitmap_any(new[i].data, atoi(req.token[2]), atoi(req.token[3]));
+				if(j == 1)
+					fprintf(stdout, "true\n");
+				else if(j == 0)
+					fprintf(stdout, "false\n");
+			}
+		}
+		
+		else if(strcmp(req.token[0], "bitmap_count")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				if(strcmp(req.token[4], "true") == 0)
+					size = bitmap_count(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 1);
+				else if(strcmp(req.token[4], "false") == 0)
+					size = bitmap_count(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 0);
+				fprintf(stdout, "%zu\n", size);
+			}
+		}
+
+		else if(strcmp(req.token[0], "bitmap_contains")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				if(strcmp(req.token[4], "true") == 0)
+					j = bitmap_contains(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 1);
+				else if(strcmp(req.token[4], "false") == 0)
+					j = bitmap_contains(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 0);
+				if(j == 1)
+					fprintf(stdout, "%true\n", size);
+				else if(j == 0)
+					fprintf(stdout, "%false\n", size);
+			}
+		}
+
+		else if(strcmp(req.token[0], "bitmap_dump")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				bitmap_dump(new[i].data);
+			}
+		}
+
+		else if(strcmp(req.token[0], "bitmap_expand")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				bitmap_expand(new[i].data, atoi(req.token[2]));
+			}
+		}
+
+		else if(strcmp(req.token[0], "bitmap_set_all")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				if(strcmp(req.token[2], "true") == 0)
+					bitmap_set_all(new[i].data, 1);
+				else if(strcmp(req.token[2], "false") == 0)
+					bitmap_contains(new[i].data, 0);
+			}
+		}
+		
+
 	}
 	
 	return 0;
