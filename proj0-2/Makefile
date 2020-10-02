@@ -1,9 +1,12 @@
 CC=gcc
 CFLAGS=-g
-OBJECTS=list.o hash.o bitmap.o testlib.o
+OBJECTS=list.o hash.o bitmap.o hex_dump.o testlib.o 
 TARGET=testlib
 
 all: $(TARGET)
+
+hex_dump.o: hex_dump.c hex_dump.h
+	$(CC) -c hex_dump.c $(CFLAGS)
 
 list.o: list.c list.h
 	$(CC) -c list.c $(CFLAGS)

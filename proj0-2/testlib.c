@@ -246,9 +246,9 @@ int main(){
 				else if(strcmp(req.token[4], "false") == 0)
 					j = bitmap_contains(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 0);
 				if(j == 1)
-					fprintf(stdout, "%true\n", size);
+					fprintf(stdout, "true\n");
 				else if(j == 0)
-					fprintf(stdout, "%false\n", size);
+					fprintf(stdout, "false\n");
 			}
 		}
 
@@ -349,8 +349,19 @@ int main(){
 				size = bitmap_size(new[i].data);
 				fprintf(stdout, "%zu\n", size);
 			}
-		}		
-
+		}
+		
+		else if(strcmp(req.token[0], "bitmap_test")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				j = bitmap_test(new[i].data, atoi(req.token[2]));
+				if(j == 1)
+					fprintf(stdout, "true\n");
+				else if(j == 0)
+					fprintf(stdout, "false\n");
+			}
+		}
+		
 	/*hash table*/
 	
 	}
