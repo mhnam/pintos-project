@@ -6,7 +6,7 @@ static int new_cnt = 0;
 int main(){
 	struct request req;
 	static char input[MAX_INPUT_SIZE]; /*array for input sting*/
-	int i;
+	int i, j, k, l;
 	int fl = 1;
 	int tmploc1, tmploc2, tmpdata;
 	struct list_item* new_listitem;
@@ -45,7 +45,7 @@ int main(){
 			if(i > -1){
 				new_listitem = malloc(sizeof(struct list_item));
 				new_listitem->data = atoi(req.token[2]);
-				list_push_back((struct list*)new[i].data, (struct list_elem*)new_listitem);
+				list_push_back(new[i].data, (struct list_elem*)new_listitem);
 			}
 		}
 
@@ -54,7 +54,7 @@ int main(){
 			if(i > -1){
 				new_listitem = malloc(sizeof(struct list_item));
 				new_listitem->data = atoi(req.token[2]);
-				list_push_front((struct list*)new[i].data, (struct list_elem*)new_listitem);
+				list_push_front(new[i].data, (struct list_elem*)new_listitem);
 			}
 		}
 		
@@ -63,13 +63,12 @@ int main(){
 			if(i > -1){
 				new_listitem = malloc(sizeof(struct list_item));
 				new_listitem->data = atoi(req.token[3]);
-				list_insert(nth_elem((struct list*)new[i].data, atoi(req.token[2])), (struct list_elem*)new_listitem);
+				list_insert(nth_elem(new[i].data, atoi(req.token[2])), (struct list_elem*)new_listitem);
 			}
 		}
 
 		else if(strcmp(req.token[0], "list_insert_ordered")==0){
 			//to be done
-			}
 		}
 		
 		else if(strcmp(req.token[0], "list_empty")==0){
@@ -130,6 +129,72 @@ int main(){
 				list_push_back(new[i].data, (struct list_elem*)new_listitem);
 			}
 		}
+
+		else if(strcmp(req.token[0], "list_remove")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				list_remove(nth_elem(new[i].data, atoi(req.token[2])));
+				free(list_entry(nth_elem(new[i].data, atoi(req.token[2])), struct list_item, elem));
+			}
+		}
+		
+		else if(strcmp(req.token[0], "list_reverse")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				list_reverse(new[i].data);
+			}
+		}
+
+		else if(strcmp(req.token[0], "list_shuffle")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				list_shuffle(new[i].data);
+			}
+		}
+		
+		else if(strcmp(req.token[0], "list_sort")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+//				list_sort(new[i].data, list_less, NULL);
+			}
+		}
+
+		else if(strcmp(req.token[0], "list_splice")==0){
+			i = namecheck(req.token[1]);
+			j = namecheck(req.token[3]);
+			if(i > -1 && j > -1){
+				tmp_listelem1 = nth_elem(new[i].data, atoi(req.token[2]));
+				tmp_listelem2 = nth_elem(new[j].data, atoi(req.token[4]));
+				tmp_listelem3 = nth_elem(new[j].data, atoi(req.token[5]));
+				list_splice(tmp_listelem1, tmp_listelem2, tmp_listelem3);
+			}
+		}
+		
+		else if(strcmp(req.token[0], "list_swap")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				tmp_listelem1 = nth_elem(new[i].data, atoi(req.token[2]));
+				tmp_listelem2 = nth_elem(new[i].data, atoi(req.token[3]));
+				list_splice(tmp_listelem1, tmp_listelem2);
+			}
+		}
+		
+		else if(strcmp(req.token[0], "list_unique")==0){
+			i = namecheck(req.token[1]);
+			
+			if(req.cnt == 3){
+				j = namecheck(req.token[2]);
+				if(i > -1 && j > -1){
+					list_unique(new[i].data, new[i].data, list_less, NULL);
+				}
+			}
+			else if(req.cnt == 2){
+				
+			}
+		}
+		
+		else if()
+	}
 	
 	return 0;
 }
