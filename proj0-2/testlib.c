@@ -266,17 +266,93 @@ int main(){
 			}
 		}
 
+		else if(strcmp(req.token[0], "bitmap_flip")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				bitmap_flip(new[i].data, atoi(req.token[2]));
+			}
+		}
+		
+		else if(strcmp(req.token[0], "bitmap_none")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				j = bitmap_none(new[i].data, atoi(req.token[2]), atoi(req.token[3]));
+				if(j == 1)
+					fprintf(stdout, "true\n");
+				else if(j == 0)
+					fprintf(stdout, "false\n");
+			}
+		}
+
+		else if(strcmp(req.token[0], "bitmap_reset")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				bitmap_reset(new[i].data, atoi(req.token[2]));
+			}
+		}
+		
+		else if(strcmp(req.token[0], "bitmap_scan")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				if(strcmp(req.token[4], "true") == 0)
+					size = bitmap_scan(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 1);
+				else if(strcmp(req.token[4], "false") == 0)
+					size = bitmap_contains(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 0);
+				fprintf(stdout, "%zu\n", size);
+			}
+		}
+
+		else if(strcmp(req.token[0], "bitmap_scan_and_flip")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				if(strcmp(req.token[4], "true") == 0)
+					size = bitmap_scan_and_flip(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 1);
+				else if(strcmp(req.token[4], "false") == 0)
+					size = bitmap_scan_and_flip(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 0);
+				fprintf(stdout, "%zu\n", size);
+			}
+		}
+
+		else if(strcmp(req.token[0], "bitmap_set")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				if(strcmp(req.token[3], "true") == 0)
+					bitmap_set(new[i].data, atoi(req.token[2]), 1);
+				else if(strcmp(req.token[2], "false") == 0)
+					bitmap_set(new[i].data, atoi(req.token[2]), 0);
+			}
+		}
+
 		else if(strcmp(req.token[0], "bitmap_set_all")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
 				if(strcmp(req.token[2], "true") == 0)
 					bitmap_set_all(new[i].data, 1);
 				else if(strcmp(req.token[2], "false") == 0)
-					bitmap_contains(new[i].data, 0);
+					bitmap_set_all(new[i].data, 0);
 			}
 		}
-		
 
+		else if(strcmp(req.token[0], "bitmap_set_multiple")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				if(strcmp(req.token[4], "true") == 0)
+					bitmap_set_multiple(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 1);
+				else if(strcmp(req.token[4], "false") == 0)
+					bitmap_set_multiple(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 0);
+			}
+		}
+
+		else if(strcmp(req.token[0], "bitmap_size")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				size = bitmap_size(new[i].data);
+				fprintf(stdout, "%zu\n", size);
+			}
+		}		
+
+	/*hash table*/
+	
 	}
 	
 	return 0;
