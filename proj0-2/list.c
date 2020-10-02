@@ -549,26 +549,30 @@ void list_swap(struct list_elem *a, struct list_elem *b){
 	else if(a->next == b){ /*case when elem a and b are sorted sequentially*/
 		tmp_prev = a->prev;
 		tmp_next = b->next;
+		
+		a->prev = b;
+		a->next = tmp_next;
 		b->prev = tmp_prev;
+		b->next = a;
+
 		if(tmp_prev)
 			tmp_prev->next = b;
-		a->next = tmp_next;
 		if(tmp_next)
 			tmp_next->prev = a;		
-		a->prev = b;
-		b->next = a;
 	}
 	else if(b->next == a){ /*case when elem b and a are sorted sequentially*/
 		tmp_prev = b->prev;
 		tmp_next = a->next;
-		a->prev = tmp_prev;
-		if(tmp_prev)
-			tmp_prev->next = b;
-		b->next = tmp_next;
-		if(tmp_next)
-			tmp_next->prev = a;		
+		
 		b->prev = a;
+		b->next = tmp_next;
+		a->prev = tmp_prev;
 		a->next = b;
+		
+		if(tmp_prev)
+			tmp_prev->next = a;
+		if(tmp_next)
+			tmp_next->prev = b;		
 	}
 	else{ /*case when there are multiple elems in between elem a and b*/
 		a_prev = a->prev;
@@ -576,10 +580,10 @@ void list_swap(struct list_elem *a, struct list_elem *b){
 		b_prev = b->prev;
 		b_next = b->next;
 		
-		b->prev = a_prev;
 		a->prev = b_prev;
-		b->next = a_next;
 		a->next = b_next;
+		b->prev = a_prev;
+		b->next = a_next;
 		
 		if(a_prev)
 			a_prev->next = b;
