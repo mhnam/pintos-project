@@ -10,7 +10,9 @@ int main(){
 	int fl = 1;
 	int tmploc1, tmploc2, tmpdata;
 	struct list_item* new_listitem;
-	struct list_elem* tmp_listelem1, tmp_listelem2, tmp_listelem3;
+	struct list_elem* tmp_listelem1;
+	struct list_elem* tmp_listelem2;
+	struct list_elem* tmp_listelem3;
 	
 	//initialise()
 
@@ -132,9 +134,10 @@ int main(){
 
 		else if(strcmp(req.token[0], "list_remove")==0){
 			i = namecheck(req.token[1]);
-			if(i > -1){
-				list_remove(nth_elem(new[i].data, atoi(req.token[2])));
-				free(list_entry(nth_elem(new[i].data, atoi(req.token[2])), struct list_item, elem));
+			if(i > -1 && atoi(req.token[2]) < (int)(list_size(new[i].data))){
+				tmp_listelem1 = nth_elem(new[i].data, atoi(req.token[2]));
+				list_remove(tmp_listelem1);
+				free(list_entry(tmp_listelem1, struct list_item, elem));
 			}
 		}
 		
@@ -175,21 +178,22 @@ int main(){
 			if(i > -1){
 				tmp_listelem1 = nth_elem(new[i].data, atoi(req.token[2]));
 				tmp_listelem2 = nth_elem(new[i].data, atoi(req.token[3]));
-				list_splice(tmp_listelem1, tmp_listelem2);
+				list_swap(tmp_listelem1, tmp_listelem2);
 			}
 		}
 		
 		else if(strcmp(req.token[0], "list_unique")==0){
 			i = namecheck(req.token[1]);
-			
 			if(req.cnt == 3){
 				j = namecheck(req.token[2]);
 				if(i > -1 && j > -1){
-					list_unique(new[i].data, new[i].data, list_less, NULL);
+					//list_unique(new[i].data, new[i].data, list_less, NULL);
 				}
 			}
 			else if(req.cnt == 2){
-				
+				if(i > -1){
+					//list_unique(new[i].data, NULL, list_less, NULL);
+				}
 			}
 		}
 		
