@@ -88,7 +88,23 @@ int main(){
 					fprintf(stdout, "false\n");
 			}
 		}
-	
+		
+		else if(strcmp(req.token[0], "list_front")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				tmp_listelem1 = list_front(new[i].data);
+				fprintf(stdout, "%d\n", list_entry(tmp_listelem1, struct list_item, elem)->data)
+			}
+		}
+
+		else if(strcmp(req.token[0], "list_back")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				tmp_listelem1 = list_back(new[i].data);
+				fprintf(stdout, "%d\n", list_entry(tmp_listelem1, struct list_item, elem)->data)
+			}
+		}
+		
 		else if(strcmp(req.token[0], "list_size")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -201,7 +217,7 @@ int main(){
 			if(req.cnt == 3){
 				j = namecheck(req.token[2]);
 				if(i > -1 && j > -1){
-					list_unique(new[i].data, new[i].data, list_less, NULL);
+					list_unique(new[i].data, new[j].data, list_less, NULL);
 				}
 			}
 			else if(req.cnt == 2){
@@ -310,7 +326,7 @@ int main(){
 				if(strcmp(req.token[4], "true") == 0)
 					size = bitmap_scan(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 1);
 				else if(strcmp(req.token[4], "false") == 0)
-					size = bitmap_contains(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 0);
+					size = bitmap_scan(new[i].data, atoi(req.token[2]), atoi(req.token[3]), 0);
 				fprintf(stdout, "%zu\n", size);
 			}
 		}
@@ -331,7 +347,7 @@ int main(){
 			if(i > -1){
 				if(strcmp(req.token[3], "true") == 0)
 					bitmap_set(new[i].data, atoi(req.token[2]), 1);
-				else if(strcmp(req.token[2], "false") == 0)
+				else if(strcmp(req.token[3], "false") == 0)
 					bitmap_set(new[i].data, atoi(req.token[2]), 0);
 			}
 		}
