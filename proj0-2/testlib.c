@@ -14,6 +14,9 @@ int main(){
 	struct list_elem* tmp_listelem1;
 	struct list_elem* tmp_listelem2;
 	struct list_elem* tmp_listelem3;
+	struct hash_item* new_hashitem;
+	struct hash_elem* tmp_hashelem1;
+	struct hash_elem* tmp_hashelem2;
 	
 	//initialise()
 
@@ -93,7 +96,7 @@ int main(){
 			i = namecheck(req.token[1]);
 			if(i > -1){
 				tmp_listelem1 = list_front(new[i].data);
-				fprintf(stdout, "%d\n", list_entry(tmp_listelem1, struct list_item, elem)->data)
+				fprintf(stdout, "%d\n", list_entry(tmp_listelem1, struct list_item, elem)->data);
 			}
 		}
 
@@ -101,7 +104,7 @@ int main(){
 			i = namecheck(req.token[1]);
 			if(i > -1){
 				tmp_listelem1 = list_back(new[i].data);
-				fprintf(stdout, "%d\n", list_entry(tmp_listelem1, struct list_item, elem)->data)
+				fprintf(stdout, "%d\n", list_entry(tmp_listelem1, struct list_item, elem)->data);
 			}
 		}
 		
@@ -392,9 +395,77 @@ int main(){
 		}
 		
 	/*hash table*/
-	
+		else if(strcmp(req.token[0], "hash_insert")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				new_hashitem = malloc(sizeof(struct hash_item));
+				new_hashitem->data = atoi(req.token[2]);
+				tmp_hashelem1 = hash_insert(new[i].data, (struct hash_elem*)new_hashitem);
+			}
+		}
+
+		else if(strcmp(req.token[0], "hash_apply")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				if(strcmp(req.token[2], "square")==0)
+					hash_apply((new[i].data, hash_action_square));
+				else if(strcmp(req.token, "triple")==0)
+					hash_apply((new[i].data, hash_action_triple));
+			}
+		}
+
+		else if(strcmp(req.token[0], "hash_delete")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				new_hashitem = malloc(sizeof(struct hash_item));
+				new_hashitem->data = atoi(req.token[2]);
+				hash_delete(new[i].data, (strct hash_elem*)new_hashitem);
+			}
+		}
+
+		else if(strcmp(req.token[0], "hash_empty")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				if(hash_empty(new[i].data))
+					fprintf(stdout, "true\n");
+				else
+					fprintf(stdout, "false\n");
+			}
+		}
+		
+		else if(strcmp(req.token[0], "hash_size")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				fprintf(stdout, "%zu", hash_size(new[i].data));
+			}
+		}
+
+		else if(strcmp(req.token[0], "hash_clear")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				hash_clear(new[i].data, hash_action_destructor);
+			}
+		}	
+
+		else if(strcmp(req.token[0], "hash_find")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				new_hashitem = malloc(sizeof(struct hash_item));
+				new_hashitem->data = atoi(req.token[2]);
+				tmp_hashelem1 = hash_find(new[i].data, (strct hash_elem*)new_hashitem);
+				fprintf(stdout, "%d", hash_entry(tmp_hashelem1, struct hash_item, elem)->data);
+			}
+		}
+		
+		else if(strcmp(req.token[0], "hash_replace")==0){
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				new_hashitem = malloc(sizeof(struct hash_item));
+				new_hashitem->data = atoi(req.token[2]);
+				tmp_hashelem1 = hash_replace(new[i].data, (strct hash_elem*)new_hashitem);
+			}
+		}
 	}
-	
 	return 0;
 }
 
@@ -429,7 +500,7 @@ void create(struct request req){
 			new[new_cnt].type = 1;
 			strcpy(new[new_cnt].name, req.token[2]);
 			new[new_cnt].data = malloc(sizeof(struct hash));
-	//			hash_init((struct hash*)new->data, hash_func, hash_less, NULL);
+			hash_init((struct hash*)new->data, hash_hash, hash_less, NULL);
 			new[new_cnt].exist = 1;
 		}
 		else if (strcmp(req.token[1], "bitmap") == 0) {
@@ -523,7 +594,7 @@ void delete(struct request req){
 				
 			case 1:
 				tmp_hash = (struct hash*)new[i].data;
-//				hash_destroy(tmp_hash, hash_action_destructor);			
+				hash_destroy(tmp_hash, hash_action_destructor);			
 				break;
 				
 			case 2:
@@ -584,4 +655,43 @@ bool list_less(const struct list_elem *a, const struct list_elem *b, void *aux){
 		return true;
 	else if(tmp_listitem1->data >= tmp_listitem2->data)
 		return false;
+}
+
+/* ACCORDING TO HASH.H:
+	Computes and returns the hash value for hash element E, given
+	auxiliary data AUX. */
+unsigned hash_hash (const struct hash_elem *e, void *aux){
+	struct hash_item* item = hash_entry(e, struct hash_item, elem);
+	return hash_int(item->data);
+}
+
+/* ACCORDING TO HASH.H:
+	Compares the value of two hash elements A and B, given
+	auxiliary data AUX.  Returns true if A is less than B, or
+	false if A is greater than or equal to B. */
+bool hash_less (const struct hash_elem *a, const struct hash_elem *b, void *aux){
+	struct hash_item* tmp_hashitem1 = hash_entry(a, struct hash_item, elem);
+	struct hash_item* tmp_hashitem2 = hash_entry(b, struct hash_item, elem);
+	if(tmp_hashitem1->data < tmp_hashitem1->data)
+		return true;
+	else if(tmp_hashitem1->data >= tmp_hashitem2->data)
+		return false;
+}
+
+/* ACCORDING TO HASH.H:
+	Performs some operation on hash element E, given auxiliary
+	data AUX. */
+void hash_action_square (struct hash_elem *e, void *aux){
+	struct hash_item* tmp_hashitem1 = hash_entry(e, struct hash_item, elem);
+	tmp_hashitem1->data = (tmp_hashitem1->data) * (tmp_hashitem1->data);
+}
+
+void hash_action_triple (struct hash_elem *e, void *aux){
+	struct hash_item* tmp_hashitem1 = hash_entry(e, struct hash_item, elem);
+	tmp_hashitem1->data = (tmp_hashitem1->data) * (tmp_hashitem1->data) * (tmp_hashitem1->data);
+}
+
+void hash_action_destructor(struct hash_elem* e, void* aux){
+	struct hash_item* tmp_hashitem1 = hash_entry(e, struct hash_item, elem);
+	free(tmp_hashitem1);
 }

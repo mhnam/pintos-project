@@ -28,3 +28,8 @@ void dumpdata(struct request req);
 void delete(struct request req);
 void delete_all();
 bool list_less(const struct list_elem *, const struct list_elem *, void *);
+unsigned hash_hash (const struct hash_elem *e, void *aux);
+bool hash_less (const struct hash_elem *a, const struct hash_elem *b, void *aux);
+void hash_action_square (struct hash_elem *e, void *aux);
+void hash_action_triple (struct hash_elem *e, void *aux);
+void hash_action_destructor(struct hash_elem* e, void* aux);
