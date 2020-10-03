@@ -440,7 +440,7 @@ int main(){
 		else if(strcmp(req.token[0], "hash_size")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
-				fprintf(stdout, "%zu", hash_size(new[i].data));
+				fprintf(stdout, "%zu\n", hash_size(new[i].data));
 			}
 		}
 
@@ -457,7 +457,9 @@ int main(){
 				new_hashitem = malloc(sizeof(struct hash_item));
 				new_hashitem->data = atoi(req.token[2]);
 				tmp_hashelem1 = hash_find(new[i].data, (struct hash_elem*)new_hashitem);
-				fprintf(stdout, "%d", hash_entry(tmp_hashelem1, struct hash_item, elem)->data);
+				if (tmp_hashelem1 != NULL) {
+					fprintf(stdout, "%d", hash_entry(tmp_hashelem1, struct hash_item, elem)->data);
+				}
 			}
 		}
 		
