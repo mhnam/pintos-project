@@ -401,7 +401,7 @@ int main(){
 				new_hashitem = malloc(sizeof(struct hash_item));
 				new_hashitem->data = atoi(req.token[2]);
 				tmp_hashelem1 = hash_insert(new[i].data, (struct hash_elem*)new_hashitem);
-				if(!tmp_hashelem1)
+				if(tmp_hashelem1)
 					free(new_hashitem);
 			}
 		}
@@ -422,7 +422,7 @@ int main(){
 				new_hashitem = malloc(sizeof(struct hash_item));
 				new_hashitem->data = atoi(req.token[2]);
 				tmp_hashelem1 = hash_delete(new[i].data, (struct hash_elem*)new_hashitem);
-				if(!tmp_hashelem1)
+				if(tmp_hashelem1)
 					free(tmp_hashelem1);
 			}
 		}
