@@ -177,5 +177,6 @@ struct list_elem *list_min (struct list *, list_less_func *, void *aux);
 void list_swap(struct list_elem *, struct list_elem *);
 struct list_elem* nth_elem(struct list *, size_t);
 void list_shuffle(struct list *);
+bool list_less(const struct list_elem *, const struct list_elem *, void *);
 
 #endif /* lib/kernel/list.h */

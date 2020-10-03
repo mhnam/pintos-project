@@ -107,5 +107,10 @@ unsigned hash_int (int);
 
 /* Defined Function */
 unsigned hash_int_2(int);
+unsigned hash_hash(const struct hash_elem *e, void *aux);
+bool hash_less(const struct hash_elem *a, const struct hash_elem *b, void *aux);
+void hash_action_square(struct hash_elem *e, void *aux);
+void hash_action_triple(struct hash_elem *e, void *aux);
+void hash_action_destructor(struct hash_elem* e, void* aux);
 
 #endif /* lib/kernel/hash.h */

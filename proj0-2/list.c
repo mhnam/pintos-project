@@ -622,3 +622,18 @@ void list_shuffle(struct list* list){
 		list_swap(tmp_elem1, tmp_elem2);
 	}
 }
+
+/* ACCORDING TO LIST.H:
+	Compares the value of two list elements A and B, given
+	auxiliary data AUX.  Returns true if A is less than B, or
+	false if A is greater than or equal to B. */
+
+bool list_less(const struct list_elem *a, const struct list_elem *b, void *aux){
+	struct list_item* tmp_listitem1 = list_entry(a, struct list_item, elem);
+	struct list_item* tmp_listitem2 = list_entry(b, struct list_item, elem);
+	
+	if(tmp_listitem1->data < tmp_listitem2->data)
+		return true;
+	else if(tmp_listitem1->data >= tmp_listitem2->data)
+		return false;
+}
