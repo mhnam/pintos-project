@@ -668,7 +668,7 @@ bool list_less(const struct list_elem *a, const struct list_elem *b, void *aux){
 /* ACCORDING TO HASH.H:
 	Computes and returns the hash value for hash element E, given
 	auxiliary data AUX. */
-unsigned hash_hash (const struct hash_elem *e, void *aux){
+unsigned hash_hash(const struct hash_elem *e, void *aux){
 	struct hash_item* item = hash_entry(e, struct hash_item, elem);
 	return hash_int(item->data);
 }
@@ -677,10 +677,10 @@ unsigned hash_hash (const struct hash_elem *e, void *aux){
 	Compares the value of two hash elements A and B, given
 	auxiliary data AUX.  Returns true if A is less than B, or
 	false if A is greater than or equal to B. */
-bool hash_less (const struct hash_elem *a, const struct hash_elem *b, void *aux){
+bool hash_less(const struct hash_elem *a, const struct hash_elem *b, void *aux){
 	struct hash_item* tmp_hashitem1 = hash_entry(a, struct hash_item, elem);
 	struct hash_item* tmp_hashitem2 = hash_entry(b, struct hash_item, elem);
-	if(tmp_hashitem1->data < tmp_hashitem1->data)
+	if(tmp_hashitem1->data < tmp_hashitem2->data)
 		return true;
 	else if(tmp_hashitem1->data >= tmp_hashitem2->data)
 		return false;
