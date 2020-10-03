@@ -401,6 +401,8 @@ int main(){
 				new_hashitem = malloc(sizeof(struct hash_item));
 				new_hashitem->data = atoi(req.token[2]);
 				tmp_hashelem1 = hash_insert(new[i].data, (struct hash_elem*)new_hashitem);
+				if(!tmp_hashelem1)
+					free(new_hashitem);
 			}
 		}
 
@@ -408,9 +410,9 @@ int main(){
 			i = namecheck(req.token[1]);
 			if(i > -1){
 				if(strcmp(req.token[2], "square")==0)
-					hash_apply((new[i].data, hash_action_square));
-				else if(strcmp(req.token, "triple")==0)
-					hash_apply((new[i].data, hash_action_triple));
+					hash_apply(new[i].data, hash_action_square);
+				else if(strcmp(req.token[2], "triple")==0)
+					hash_apply(new[i].data, hash_action_triple);
 			}
 		}
 
@@ -419,7 +421,9 @@ int main(){
 			if(i > -1){
 				new_hashitem = malloc(sizeof(struct hash_item));
 				new_hashitem->data = atoi(req.token[2]);
-				hash_delete(new[i].data, (strct hash_elem*)new_hashitem);
+				tmp_hashelem1 = hash_delete(new[i].data, (struct hash_elem*)new_hashitem);
+				if(!tmp_hashelem1)
+					free(tmp_hashelem1);
 			}
 		}
 
@@ -452,7 +456,7 @@ int main(){
 			if(i > -1){
 				new_hashitem = malloc(sizeof(struct hash_item));
 				new_hashitem->data = atoi(req.token[2]);
-				tmp_hashelem1 = hash_find(new[i].data, (strct hash_elem*)new_hashitem);
+				tmp_hashelem1 = hash_find(new[i].data, (struct hash_elem*)new_hashitem);
 				fprintf(stdout, "%d", hash_entry(tmp_hashelem1, struct hash_item, elem)->data);
 			}
 		}
@@ -462,7 +466,9 @@ int main(){
 			if(i > -1){
 				new_hashitem = malloc(sizeof(struct hash_item));
 				new_hashitem->data = atoi(req.token[2]);
-				tmp_hashelem1 = hash_replace(new[i].data, (strct hash_elem*)new_hashitem);
+				tmp_hashelem1 = hash_replace(new[i].data, (struct hash_elem*)new_hashitem);
+				if(tmp_hashelem1)
+					free(tmp_hashelem1);
 			}
 		}
 	}
@@ -500,7 +506,7 @@ void create(struct request req){
 			new[new_cnt].type = 1;
 			strcpy(new[new_cnt].name, req.token[2]);
 			new[new_cnt].data = malloc(sizeof(struct hash));
-			hash_init((struct hash*)new->data, hash_hash, hash_less, NULL);
+			hash_init((struct hash*)new[new_cnt].data, hash_hash, hash_less, NULL);
 			new[new_cnt].exist = 1;
 		}
 		else if (strcmp(req.token[1], "bitmap") == 0) {
@@ -630,7 +636,7 @@ void delete_all(void) {
 
 				case 1:
 					tmp_hash = (struct hash*)new[i].data;
-//					hash_destroy(tmp_hash, hash_action_destructor);
+					hash_destroy(tmp_hash, hash_action_destructor);
 					break;
 
 				case 2:
