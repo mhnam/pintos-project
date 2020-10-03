@@ -385,13 +385,13 @@ struct bitmap *bitmap_expand(struct bitmap *bitmap, int size){
 		return NULL;
 	}
 
-	new_bitmap = bitmap_create((bitmap->bit_cnt)+size);
+	new_bitmap = bitmap_create(bitmap->bit_cnt+size);
 
 	if(!new_bitmap){ /*new bitmap is failed to generated -> fail*/
 		return NULL;
 	}
 
-	for(i = 0; i < atoi(bitmap->bit_cnt); ++i){
+	for(i = 0; i < bitmap->bit_cnt; i++){
 		tmp = bitmap_test((const struct bitmap*)bitmap, i);
 		if(tmp == 1){
 			bitmap_set(new_bitmap, i, 1);

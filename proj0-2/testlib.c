@@ -294,7 +294,7 @@ int main(){
 		else if(strcmp(req.token[0], "bitmap_expand")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
-				bitmap_expand(new[i].data, atoi(req.token[2]));
+				new[i].data = bitmap_expand(new[i].data, atoi(req.token[2]));
 			}
 		}
 
@@ -458,7 +458,7 @@ int main(){
 				new_hashitem->data = atoi(req.token[2]);
 				tmp_hashelem1 = hash_find(new[i].data, (struct hash_elem*)new_hashitem);
 				if (tmp_hashelem1 != NULL) {
-					fprintf(stdout, "%d", hash_entry(tmp_hashelem1, struct hash_item, elem)->data);
+					fprintf(stdout, "%d\n", hash_entry(tmp_hashelem1, struct hash_item, elem)->data);
 				}
 			}
 		}
