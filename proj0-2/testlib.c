@@ -71,7 +71,12 @@ int main(){
 		}
 
 		else if(strcmp(req.token[0], "list_insert_ordered")==0){
-			//to be done
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				new_listitem = malloc(sizeof(struct list_item));
+				new_listitem->data = atoi(req.token[2]);
+				list_insert(new[i].data, (struct list_elem*)new_listitem, list_less_func, NULL);
+			}
 		}
 		
 		else if(strcmp(req.token[0], "list_empty")==0){
@@ -92,11 +97,19 @@ int main(){
 		}
 	
 		else if(strcmp(req.token[0], "list_max")==0){
-			//to be done (require list_less function)
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				tmp_listelem1 = list_max(new[i].data, list_less_func, NULL);
+				fprintf(stdout, "%d\n", list_entry(tmp_listelem1, struct list_item, elem)->data);
+			}
 		}
 	
 		else if(strcmp(req.token[0], "list_min")==0){
-			//to be done (require list_less function)
+			i = namecheck(req.token[1]);
+			if(i > -1){
+				tmp_listelem1 = list_min(new[i].data, list_less_func, NULL);
+				fprintf(stdout, "%d\n", list_entry(tmp_listelem1, struct list_item, elem)->data);
+			}
 		}
 	
 		else if(strcmp(req.token[0], "list_pop_front")==0){
@@ -159,7 +172,7 @@ int main(){
 		else if(strcmp(req.token[0], "list_sort")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
-//				list_sort(new[i].data, list_less, NULL);
+				list_sort(new[i].data, list_less_func, NULL);
 			}
 		}
 
@@ -188,12 +201,12 @@ int main(){
 			if(req.cnt == 3){
 				j = namecheck(req.token[2]);
 				if(i > -1 && j > -1){
-					//list_unique(new[i].data, new[i].data, list_less, NULL);
+					list_unique(new[i].data, new[i].data, list_less_func, NULL);
 				}
 			}
 			else if(req.cnt == 2){
 				if(i > -1){
-					//list_unique(new[i].data, NULL, list_less, NULL);
+					list_unique(new[i].data, NULL, list_less_func, NULL);
 				}
 			}
 		}
@@ -540,4 +553,19 @@ void delete_all(void) {
 			}
 		}
 	}
+}
+
+/* ACCORDING TO LIST.H:
+	Compares the value of two list elements A and B, given
+	auxiliary data AUX.  Returns true if A is less than B, or
+	false if A is greater than or equal to B. */
+
+bool list_less_func(const struct list_elem *a, const struct list_elem *b, void *aux){
+	struct list_item* tmp_listitem1 = list_entry(a, sturct list_item, elem);
+	struct list_item* tmp_listitem2 = list_entry(b, sturct list_item, elem);
+	
+	if(tmp_listitem1->data < tmp_listitem2->data)
+		return true;
+	else if(tmp_listitem1->data >= tmp_listitem2->data)
+		return false;
 }

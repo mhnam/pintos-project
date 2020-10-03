@@ -27,3 +27,4 @@ void create(struct request req);
 void dumpdata(struct request req);
 void delete(struct request req);
 void delete_all();
+bool list_less_func(const struct list_elem *, const struct list_elem *, void *);
