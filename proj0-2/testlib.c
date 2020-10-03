@@ -398,7 +398,7 @@ int main(){
 		else if(strcmp(req.token[0], "hash_insert")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
-				new_hashitem = malloc(sizeof(struct hash_item));
+				new_hashitem = calloc(sizeof(struct hash_item), 1);
 				new_hashitem->data = atoi(req.token[2]);
 				tmp_hashelem1 = hash_insert(new[i].data, (struct hash_elem*)new_hashitem);
 				if(tmp_hashelem1)
@@ -494,13 +494,13 @@ void create(struct request req){
 	
 	fl = namecheck(req.token[2]);
 	if(fl == -1){
-		new_cnt++;
 		if (strcmp(req.token[1], "list") == 0) {
 			new[new_cnt].type = 0;
 			strcpy(new[new_cnt].name, req.token[2]);
 			new[new_cnt].data = malloc(sizeof(struct list));
 			list_init((struct list*)new[new_cnt].data);
 			new[new_cnt].exist = 1;
+			new_cnt++;
 		}
 		else if (strcmp(req.token[1], "hashtable") == 0) {
 			new[new_cnt].type = 1;
@@ -508,6 +508,7 @@ void create(struct request req){
 			new[new_cnt].data = malloc(sizeof(struct hash));
 			hash_init((struct hash*)new[new_cnt].data, hash_hash, hash_less, NULL);
 			new[new_cnt].exist = 1;
+			new_cnt++;
 		}
 		else if (strcmp(req.token[1], "bitmap") == 0) {
 			new[new_cnt].type = 2;
@@ -515,6 +516,7 @@ void create(struct request req){
 			size = atoi(req.token[3]);
 			new[new_cnt].data = bitmap_create(size);
 			new[new_cnt].exist = 1;
+			new_cnt++;
 		}
 	}
 }
