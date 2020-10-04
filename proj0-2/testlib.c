@@ -17,32 +17,31 @@ int main(){
 	struct hash_item* new_hashitem;
 	struct hash_elem* tmp_hashelem1;
 	struct hash_elem* tmp_hashelem2;
-	
+
 	//initialise()
 
 	while(1){
 		fgets(input, MAX_INPUT_SIZE, stdin);
 		req.cnt = 0;
 		req.token[req.cnt] = strtok(input, " \t\n");
-		
+
 		while(1){
 			req.token[++req.cnt] = strtok(NULL, " \t\n");
 			if(req.token[req.cnt]==NULL)
 				break;
 		}
-		
+
 		if(strcmp(req.token[0], "create")==0)
 			create(req);
-		
+
 		else if(strcmp(req.token[0], "dumpdata")==0)
 			dumpdata(req);
-		
+
 		else if(strcmp(req.token[0], "delete")==0)
 			delete(req);
-		
+
 		else if(strcmp(req.token[0], "quit")==0){
 			delete_all();
-			//free(new);
 			break;
 		}
 
@@ -63,7 +62,7 @@ int main(){
 				list_push_front(new[i].data, (struct list_elem*)new_listitem);
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "list_insert")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -81,7 +80,7 @@ int main(){
 				list_insert_ordered(new[i].data, (struct list_elem*)new_listitem, list_less, NULL);
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "list_empty")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -91,7 +90,7 @@ int main(){
 					fprintf(stdout, "false\n");
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "list_front")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -107,14 +106,14 @@ int main(){
 				fprintf(stdout, "%d\n", list_entry(tmp_listelem1, struct list_item, elem)->data);
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "list_size")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
 				fprintf(stdout, "%zu\n", list_size(new[i].data));
 			}
 		}
-	
+
 		else if(strcmp(req.token[0], "list_max")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -122,7 +121,7 @@ int main(){
 				fprintf(stdout, "%d\n", list_entry(tmp_listelem1, struct list_item, elem)->data);
 			}
 		}
-	
+
 		else if(strcmp(req.token[0], "list_min")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -130,7 +129,7 @@ int main(){
 				fprintf(stdout, "%d\n", list_entry(tmp_listelem1, struct list_item, elem)->data);
 			}
 		}
-	
+
 		else if(strcmp(req.token[0], "list_pop_front")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -138,7 +137,7 @@ int main(){
 				free(list_entry(tmp_listelem1, struct list_item, elem));
 			}
 		}
-	
+
 		else if(strcmp(req.token[0], "list_pop_back")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -173,7 +172,7 @@ int main(){
 				free(list_entry(tmp_listelem1, struct list_item, elem));
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "list_reverse")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -187,7 +186,7 @@ int main(){
 				list_shuffle(new[i].data);
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "list_sort")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -205,7 +204,7 @@ int main(){
 				list_splice(tmp_listelem1, tmp_listelem2, tmp_listelem3);
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "list_swap")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1 && atoi(req.token[2])<list_size(new[i].data) && atoi(req.token[3])<list_size(new[i].data)){
@@ -214,7 +213,7 @@ int main(){
 				list_swap(tmp_listelem1, tmp_listelem2);
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "list_unique")==0){
 			i = namecheck(req.token[1]);
 			if(req.cnt == 3){
@@ -229,14 +228,14 @@ int main(){
 				}
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "bitmap_mark")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
 				bitmap_mark(new[i].data, atoi(req.token[2]));
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "bitmap_all")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -258,7 +257,7 @@ int main(){
 					fprintf(stdout, "false\n");
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "bitmap_count")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -304,7 +303,7 @@ int main(){
 				bitmap_flip(new[i].data, atoi(req.token[2]));
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "bitmap_none")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -322,7 +321,7 @@ int main(){
 				bitmap_reset(new[i].data, atoi(req.token[2]));
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "bitmap_scan")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -382,7 +381,7 @@ int main(){
 				fprintf(stdout, "%zu\n", size);
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "bitmap_test")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -393,7 +392,7 @@ int main(){
 					fprintf(stdout, "false\n");
 			}
 		}
-		
+
 	/*hash table*/
 		else if(strcmp(req.token[0], "hash_insert")==0){
 			i = namecheck(req.token[1]);
@@ -436,7 +435,7 @@ int main(){
 					fprintf(stdout, "false\n");
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "hash_size")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -449,7 +448,7 @@ int main(){
 			if(i > -1){
 				hash_clear(new[i].data, hash_action_destructor);
 			}
-		}	
+		}
 
 		else if(strcmp(req.token[0], "hash_find")==0){
 			i = namecheck(req.token[1]);
@@ -462,7 +461,7 @@ int main(){
 				}
 			}
 		}
-		
+
 		else if(strcmp(req.token[0], "hash_replace")==0){
 			i = namecheck(req.token[1]);
 			if(i > -1){
@@ -480,7 +479,7 @@ int main(){
 int namecheck(char* name){
 	int i;
 	int fl = -1;
-	
+
 	for (i = 0; i < MAX_DATA_STRUCTURE_NUM; i++) {
 		if ((strcmp(name, new[i].name) == 0) && new[i].exist == 1) {
 			fl = i;
@@ -493,7 +492,7 @@ int namecheck(char* name){
 void create(struct request req){
 	size_t size;
 	int fl;
-	
+
 	fl = namecheck(req.token[2]);
 	if(fl == -1){
 		if (strcmp(req.token[1], "list") == 0) {
@@ -533,11 +532,11 @@ void dumpdata(struct request req){
 	int type;
 	int cnt = 0;
 	size_t size;
-	
+
 	i = namecheck(req.token[1]);
-	
+
 	if(i > -1){
-		type = new[i].type;	
+		type = new[i].type;
 		switch(type){
 			case 0: /*list*/
 				for(tmp_elem = list_begin((struct list*)new[i].data); tmp_elem != list_end((struct list*)new[i].data); tmp_elem = list_next(tmp_elem)){
@@ -548,7 +547,7 @@ void dumpdata(struct request req){
 				if(cnt > 0)
 					fprintf(stdout, "\n");
 				break;
-			
+
 			case 1: /*hashtable*/
 				hash_first(iter, (struct hash*)new[i].data);
 				while(hash_next(iter)){
@@ -559,7 +558,7 @@ void dumpdata(struct request req){
 				if(cnt > 0)
 					fprintf(stdout, "\n");
 				break;
-				
+
 			case 2: /*bitmap*/
 				tmp_bit = new[i].data;
 				size = bitmap_size(tmp_bit);
@@ -585,12 +584,12 @@ void delete(struct request req){
 	int i;
 	int fl = -1;
 	int type;
-	
+
 	i = namecheck(req.token[1]);
 	if(i > -1){
 		new[i].exist = 0;
 		type = new[i].type;
-		
+
 		switch(type){
 			case 0:
 				tmp_list = (struct list*)new[i].data;
@@ -601,12 +600,12 @@ void delete(struct request req){
 				}
 				free(tmp_list);
 				break;
-				
+
 			case 1:
 				tmp_hash = (struct hash*)new[i].data;
-				hash_destroy(tmp_hash, hash_action_destructor);			
+				hash_destroy(tmp_hash, hash_action_destructor);
 				break;
-				
+
 			case 2:
 				tmp_bit = (struct bitmap*)new[i].data;
 				bitmap_destroy(tmp_bit);
