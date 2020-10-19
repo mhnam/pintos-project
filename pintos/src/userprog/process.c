@@ -317,7 +317,11 @@ load (const char *file_name, void (**eip) (void), void **esp)
   struct file *file = NULL;
   off_t file_ofs;
   bool success = false;
-  int i;
+	bool fl;
+	char *fn_copy, *argv_ptr, *name_ptr;
+	char *olds, *token; /*for strtok_r*/
+	char **argv;
+	int i, j, k, argc, argv_size, align_size;	
 	
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
@@ -408,14 +412,6 @@ load (const char *file_name, void (**eip) (void), void **esp)
   /* Set up stack. */
   if (!setup_stack (esp))
     goto done;
-
-	//parse argument
-  char *fn_copy;
-	int i, j, k, argc, argv_size, align_size;
-	bool fl;
-	char *argv_ptr, *name_ptr;
-	char **argv;
-	char *olds, *token; /*for strtok_r*/
 		
 	/*error handling*/
   fn_copy = palloc_get_page (0);
