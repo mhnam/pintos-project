@@ -336,6 +336,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
 	strlcpy(&cmd_name, &file_name, strlen(file_name)+1);
 	for(i=0; cmd_name[i] != ' ' && cmd_name[i] != '\0'; i++);
 	cmd_name[i] = '\0';
+	printf(">>	[DEBUG] cmd_name: %s\n", cmd_name);
 	
 	/* Open executable file. */
   file = filesys_open (cmd_name);
