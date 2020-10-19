@@ -37,11 +37,39 @@ process_execute (const char *file_name)
   if (fn_copy == NULL)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
+/*
 
+  real_fn = palloc_get_page (0);
+  if (real_fn == NULL)
+    return TID_ERROR;
+  for (i = 0; 
+       file_name[i] != '\0' && file_name[i] != ' ' && file_name[i] != '\t'; 
+       ++i)
+    real_fn[i] = file_name[i];
+  real_fn[i] = 0;
+
+  //printf ("[Debug] process_execute () - before thread_create()\n");
+
+*/
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
+	
+/*
+  else
+    {
+      struct thread *cur = thread_current ();
+      struct list_elem *e = list_pop_back (&cur->child_list);
+      struct thread *child = list_entry (e, struct thread, child_elem);
+
+      sema_down (&child->wait_sema);
+      if (!child->load_success)
+        tid = TID_ERROR;
+      else
+        list_push_back (&cur->child_list, e);
+    }
+*/
   return tid;
 }
 
@@ -61,6 +89,12 @@ start_process (void *file_name_)
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (file_name, &if_.eip, &if_.esp);
 
+/*
+  cur = thread_current ();
+  cur->load_success = success;
+  sema_up (&cur->wait_sema);
+*/
+	
   /* If load failed, quit. */
   palloc_free_page (file_name);
   if (!success) 
@@ -88,6 +122,58 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED) 
 {
+/*
+
+   // child_tid -> invalid ( nothing or not child ) : return -1
+   // child_tid -> child is terminated without exit : return -1
+   // parent is blocking until child is terminated with exit...
+   // if child state is terminated, return child's return address.
+
+
+  struct thread *cur, *child = NULL;
+  struct list_elem *e;
+  int exit_code;
+
+  cur = thread_current ();
+
+  for (e = list_begin (&cur->child_list); 
+       e != list_end (&cur->child_list); e = list_next(e)) 
+    {
+      struct thread *c = list_entry (e, struct thread, child_elem);
+      if (c->tid == child_tid)
+        {
+          child = c;
+          break;
+        }
+    }
+
+  if (child == NULL)
+      return -1;
+
+  list_remove (e);
+
+  if (child->status == THREAD_DYING)
+    {
+      if (child->normal_exit == true)
+        {
+          exit_code = child->exit_code;
+          sema_up (&child->exit_sema);
+        }
+      else
+        {
+          sema_up (&child->exit_sema);
+          return -1;
+        }
+    }
+  else
+    {
+      sema_down (&child->wait_sema);
+      exit_code = child->exit_code;
+      sema_up (&child->exit_sema);
+    }
+  
+  return exit_code;
+*/
   return -1;
 }
 
@@ -114,6 +200,23 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
+/*
+   // free resources that current process owned.
+
+  for (e = list_begin (&cur->child_list); 
+       e != list_end (&cur->child_list); e = list_next(e)) 
+    {
+      struct thread *c = list_entry (e, struct thread, child_elem);
+      sema_up (&c->exit_sema);
+    }
+
+  printf ("%s: exit(%d)\n", cur->name, cur->exit_code);
+
+
+  // if parent is blocking for waiting me, wake parent.
+
+  sema_up (&cur->wait_sema);
+  sema_down (&cur->exit_sema);*/
 }
 
 /* Sets up the CPU for running user code in the current
@@ -201,6 +304,7 @@ static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
                           uint32_t read_bytes, uint32_t zero_bytes,
                           bool writable);
 
+
 /* Loads an ELF executable from FILE_NAME into the current thread.
    Stores the executable's entry point into *EIP
    and its initial stack pointer into *ESP.
@@ -214,7 +318,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
   off_t file_ofs;
   bool success = false;
   int i;
-
+	
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
   if (t->pagedir == NULL) 
@@ -305,14 +409,86 @@ load (const char *file_name, void (**eip) (void), void **esp)
   if (!setup_stack (esp))
     goto done;
 
-  /* Start address. */
-  *eip = (void (*) (void)) ehdr.e_entry;
+	//parse argument
+  char *fn_copy;
+	int i, j, k, argc, argv_size, align_size;
+	bool fl;
+	char *argv_ptr, *name_ptr;
+	char **argv;
+	char *olds, *token; /*for strtok_r*/
+		
+	/*error handling*/
+  fn_copy = palloc_get_page (0);
+  if (fn_copy == NULL)
+    goto done;
+	
+	/*copy arguments into fn_copy and acquire argc*/
+	for(i = 0, j = 0; file_name[i]; i++){
+		if(file_name[i] != ' ' && file_name != '\t'){
+			fn_copy[j++] = file_name[i];	fl = false;
+		}
+		else{
+			if(fl)	continue;
+			fn_copy[j++] = 0;
+			argc++;
+			fl = true;
+		}
+	}
+	
+	if(!fl){
+		fn_copy[j++] = 0; argc++;
+	}
+	
+	argv_size = j; /*size of argument vector*/
+	
+	/*slice argument into tocken*/
+	token = strtok_r(fn_copy, " ", &olds);
+	
+	/*generate argv[] (pointer) and argv[][] (actual data)*/
+	argv = (char**) malloc(sizeof(char *) * argc);
+	
+  for(i = 0; i < argc; i++, token = strtok_r(NULL, " ", &olds))
+		argv[i] = token;
+	
+	for(i = argc-1; i >= 0; i--){
+		*esp = *esp - strlen(argv[i]) + 1;
+		strlcpy(*esp, argv[i], strlen(argv[i]) + 1);
+		argv[i] = *esp;
+	}
+	
+	/*push align, and null*/
+	if(argv_size % 4 != 0)
+		*esp = *esp - (4 - argv_size % 4);
+	*esp -= 4;
+	**(uint32_t **)esp = 0;
+	
+	/*push address of each token*/
+	for(i = argc-1; i >= 0; i--){
+		*esp -= 4;	**(uint32_t **)esp = argv[i];
+	}
+	
+	/*push address of argv*/
+	*esp -= 4;	**(uint32_t **)esp = *esp + 4;
+	
+	/*push address of argc*/
+	*esp -= 4;	**(uint32_t **)esp = argc;
 
-  success = true;
+	/*push return address*/
+	*esp -= 4;	**(uint32_t **)esp = 0;
+	
+	free(argv);
+	
+	while(1)
+		hex_dump((uintptr_t) *esp, (const char *) *esp, (uintptr_t) PHYS_BASE - (uintptr_t) *esp, true);
+	
+/* Start address. */
+  *eip = (void (*) (void)) ehdr.e_entry;
+	  success = true;
 
  done:
   /* We arrive here whether the load is successful or not. */
-  file_close (file);
+	palloc_free_page(fn_copy);
+	file_close (file);
   return success;
 }
 
