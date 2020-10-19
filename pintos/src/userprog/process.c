@@ -20,7 +20,6 @@
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
-static void construct_cmd_stack(char* file_name, void **esp);
 
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
@@ -100,9 +99,7 @@ start_process (void *file_name_)
 	
   /* If load failed, quit. */
   palloc_free_page (file_name);
-	if(success)
-		construct_cmd_stack(file_name, &if_.esp);
-  else
+	if(!success)
     thread_exit ();
 
   /* Start the user process by simulating a return from an
@@ -324,8 +321,11 @@ load (const char *file_name, void (**eip) (void), void **esp)
   struct file *file = NULL;
   off_t file_ofs;
   bool success = false;
-	int i;	
-	char *cmd_name;
+	bool fl;
+	int i, j, argc, argv_size;	
+	char *cmd_name, *fn_copy;
+	char *olds, *token; /*for strtok_r*/
+	char **argv;
 	
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
@@ -333,7 +333,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
     goto done;
   process_activate ();
 	
-	strlcpy(cmd_name, file_name, strlen(file_name)+1);
+	strlcpy(&cmd_name, &file_name, strlen(file_name)+1);
 	for(i=0; cmd_name[i] != ' ' && cmd_name[i] != '\0'; i++);
 	cmd_name[i] = '\0';
 	
@@ -422,23 +422,6 @@ load (const char *file_name, void (**eip) (void), void **esp)
     goto done;
 	printf(">>	[DEBUG] Stack Setup Completed\n");
 	
-/* Start address. */
-  *eip = (void (*) (void)) ehdr.e_entry;
-	  success = true;
-
- done:
-  /* We arrive here whether the load is successful or not. */
-	file_close (file);
-  return success;
-}
-
-void construct_cmd_stack(char* file_name, void **esp){
-	bool fl;
-	char *fn_copy;
-	char *olds, *token; /*for strtok_r*/
-	char **argv;
-	int i, j, argc, argv_size;	
-
 	/*error handling*/
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
@@ -507,10 +490,17 @@ void construct_cmd_stack(char* file_name, void **esp){
 	while(1)
 		hex_dump((uintptr_t) *esp, (const char *) *esp, (uintptr_t) PHYS_BASE - (uintptr_t) *esp, true);
 	
+/* Start address. */
+  *eip = (void (*) (void)) ehdr.e_entry;
+	  success = true;
+
  done:
   /* We arrive here whether the load is successful or not. */
 	palloc_free_page(fn_copy);
+	file_close (file);
+  return success;
 }
+
 
 /* load() helpers. */
 
