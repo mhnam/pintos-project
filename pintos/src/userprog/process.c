@@ -333,16 +333,46 @@ load (const char *file_name, void (**eip) (void), void **esp)
     goto done;
   process_activate ();
 	
-	strlcpy(&cmd_name, &file_name, strlen(file_name)+1);
-	for(i=0; cmd_name[i] != ' ' && cmd_name[i] != '\0'; i++);
-	cmd_name[i] = '\0';
-	printf(">>	[DEBUG] cmd_name: %s\n", cmd_name);
+	//argument parsing
+	printf(">>	[DEBUG] Starting Argument Parsing...\n");
+  fn_copy = palloc_get_page (0);
+  if (fn_copy == NULL)
+    goto done;
+	
+	/*copy arguments into fn_copy and acquire argc*/
+	for(i = 0, j = 0; file_name[i]; i++){
+		if(file_name[i] != ' ' && file_name != '\t'){
+			fn_copy[j++] = file_name[i];	fl = false;
+		}
+		else{
+			if(fl)	continue;
+			fn_copy[j++] = 0;
+			argc++;
+			fl = true;
+		}
+	}
+	
+	if(!fl){
+		fn_copy[j++] = 0; argc++;
+	}
+	
+	argv_size = j; /*size of argument vector*/
+	
+	/*slice argument into tocken*/
+	token = strtok_r(fn_copy, " ", &olds);
+
+	/*generate argv[] (pointer) and argv[][] (actual data)*/
+	argv = (char**) malloc(sizeof(char *) * argc);
+	
+  for(i = 0; i < argc; i++, token = strtok_r(NULL, " ", &olds))
+		argv[i] = token;
+	printf(">>	[DEBUG] Argument Parsing Completed\tcmd_name: %s\n", argv[0]);
 	
 	/* Open executable file. */
-  file = filesys_open (cmd_name);
+  file = filesys_open (argv[0]);
   if (file == NULL) 
     {
-      printf ("load: %s: open failed\n", cmd_name);
+      printf ("load: %s: open failed\n", argv[0]);
       goto done; 
     }
 
@@ -355,7 +385,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
       || ehdr.e_phentsize != sizeof (struct Elf32_Phdr)
       || ehdr.e_phnum > 1024) 
     {
-      printf ("load: %s: error loading executable\n", cmd_name);
+      printf ("load: %s: error loading executable\n", argv[0]);
       goto done; 
     }
 
@@ -423,41 +453,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
     goto done;
 	printf(">>	[DEBUG] Stack Setup Completed\n");
 	
-	/*error handling*/
-  fn_copy = palloc_get_page (0);
-  if (fn_copy == NULL)
-    goto done;
-	
-	/*copy arguments into fn_copy and acquire argc*/
-	for(i = 0, j = 0; file_name[i]; i++){
-		if(file_name[i] != ' ' && file_name != '\t'){
-			fn_copy[j++] = file_name[i];	fl = false;
-		}
-		else{
-			if(fl)	continue;
-			fn_copy[j++] = 0;
-			argc++;
-			fl = true;
-		}
-	}
-	
-	if(!fl){
-		fn_copy[j++] = 0; argc++;
-	}
-	
-	argv_size = j; /*size of argument vector*/
-	
-	/*slice argument into tocken*/
-	token = strtok_r(fn_copy, " ", &olds);
-
 	printf(">>	[DEBUG] ARGV STACK Generation Started\n");
-	
-	/*generate argv[] (pointer) and argv[][] (actual data)*/
-	argv = (char**) malloc(sizeof(char *) * argc);
-	
-  for(i = 0; i < argc; i++, token = strtok_r(NULL, " ", &olds))
-		argv[i] = token;
-	
 	for(i = argc-1; i >= 0; i--){
 		*esp = *esp - strlen(argv[i]) + 1;
 		strlcpy(*esp, argv[i], strlen(argv[i]) + 1);
