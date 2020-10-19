@@ -87,7 +87,9 @@ start_process (void *file_name_)
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
+	printf(">>	[DEBUG] Starting Load");
   success = load (file_name, &if_.eip, &if_.esp);
+	printf(">>	[DEBUG] Load Completed");
 
 /*
   cur = thread_current ();
@@ -122,6 +124,9 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED) 
 {
+	int i;
+	for(i=0; i<1000000000; i++);
+	return -1;
 /*
 
    // child_tid -> invalid ( nothing or not child ) : return -1
@@ -412,7 +417,8 @@ load (const char *file_name, void (**eip) (void), void **esp)
   /* Set up stack. */
   if (!setup_stack (esp))
     goto done;
-		
+	printf(">>	[DEBUG] Stack Setup Completed");
+	
 	/*error handling*/
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
@@ -439,6 +445,8 @@ load (const char *file_name, void (**eip) (void), void **esp)
 	
 	/*slice argument into tocken*/
 	token = strtok_r(fn_copy, " ", &olds);
+
+	printf(">>	[DEBUG] ARGV STACK Generation Started");
 	
 	/*generate argv[] (pointer) and argv[][] (actual data)*/
 	argv = (char**) malloc(sizeof(char *) * argc);
@@ -471,6 +479,8 @@ load (const char *file_name, void (**eip) (void), void **esp)
 
 	/*push return address*/
 	*esp -= 4;	**(uint32_t **)esp = 0;
+	
+	printf(">>	[DEBUG] ARGV STACK Setup Completed");
 	
 	free(argv);
 	
