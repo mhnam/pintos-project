@@ -101,7 +101,7 @@ start_process (void *file_name_)
   /* If load failed, quit. */
   palloc_free_page (file_name);
 	if(success)
-		construct_cmd_stack(file_name, esp);
+		construct_cmd_stack(file_name, &if_.esp);
   else
     thread_exit ();
 
@@ -325,8 +325,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
   off_t file_ofs;
   bool success = false;
 	int i;	
-	char *fn_copy;
-	char *olds, *cmd_name;
+	char *cmd_name;
 	
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
@@ -334,14 +333,15 @@ load (const char *file_name, void (**eip) (void), void **esp)
     goto done;
   process_activate ();
 	
-	strlcpy(fn_copy, file_name, strlen(file_name)+1);
-	cmd_name[0] = strtok_r(fn_copy, " ", &olds);
+	strlcpy(cmd_name, file_name, strlen(file_name)+1);
+	for(i=0; cmd_name[i] != ' ' && cmd_name[i] != '\0'; i++);
+	cmd_name[i] = '\0';
 	
 	/* Open executable file. */
-  file = filesys_open (cmd_name[0]);
+  file = filesys_open (cmd_name);
   if (file == NULL) 
     {
-      printf ("load: %s: open failed\n", cmd_name[0]);
+      printf ("load: %s: open failed\n", cmd_name);
       goto done; 
     }
 
@@ -354,7 +354,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
       || ehdr.e_phentsize != sizeof (struct Elf32_Phdr)
       || ehdr.e_phnum > 1024) 
     {
-      printf ("load: %s: error loading executable\n", file_name);
+      printf ("load: %s: error loading executable\n", cmd_name);
       goto done; 
     }
 
@@ -428,7 +428,6 @@ load (const char *file_name, void (**eip) (void), void **esp)
 
  done:
   /* We arrive here whether the load is successful or not. */
-	palloc_free_page(fn_copy);
 	file_close (file);
   return success;
 }
@@ -507,6 +506,10 @@ void construct_cmd_stack(char* file_name, void **esp){
 	
 	while(1)
 		hex_dump((uintptr_t) *esp, (const char *) *esp, (uintptr_t) PHYS_BASE - (uintptr_t) *esp, true);
+	
+ done:
+  /* We arrive here whether the load is successful or not. */
+	palloc_free_page(fn_copy);
 }
 
 /* load() helpers. */
