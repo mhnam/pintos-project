@@ -20,6 +20,7 @@
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
+static void construct_cmd_stack(char* file_name, void **esp);
 
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
@@ -87,9 +88,9 @@ start_process (void *file_name_)
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-	printf(">>	[DEBUG] Starting Load");
+	printf(">>	[DEBUG] Starting Load\n");
   success = load (file_name, &if_.eip, &if_.esp);
-	printf(">>	[DEBUG] Load Completed");
+	printf(">>	[DEBUG] Load Completed\n");
 
 /*
   cur = thread_current ();
@@ -99,7 +100,9 @@ start_process (void *file_name_)
 	
   /* If load failed, quit. */
   palloc_free_page (file_name);
-  if (!success) 
+	if(success)
+		construct_cmd_stack(file_name, esp);
+  else
     thread_exit ();
 
   /* Start the user process by simulating a return from an
@@ -309,7 +312,6 @@ static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
                           uint32_t read_bytes, uint32_t zero_bytes,
                           bool writable);
 
-
 /* Loads an ELF executable from FILE_NAME into the current thread.
    Stores the executable's entry point into *EIP
    and its initial stack pointer into *ESP.
@@ -322,23 +324,24 @@ load (const char *file_name, void (**eip) (void), void **esp)
   struct file *file = NULL;
   off_t file_ofs;
   bool success = false;
-	bool fl;
-	char *fn_copy, *argv_ptr, *name_ptr;
-	char *olds, *token; /*for strtok_r*/
-	char **argv;
-	int i, j, k, argc, argv_size, align_size;	
+	int i;	
+	char *fn_copy;
+	char *olds, *cmd_name;
 	
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
   if (t->pagedir == NULL) 
     goto done;
   process_activate ();
-
-  /* Open executable file. */
-  file = filesys_open (file_name);
+	
+	strlcpy(fn_copy, file_name, strlen(file_name)+1);
+	cmd_name[0] = strtok_r(fn_copy, " ", &olds);
+	
+	/* Open executable file. */
+  file = filesys_open (cmd_name[0]);
   if (file == NULL) 
     {
-      printf ("load: %s: open failed\n", file_name);
+      printf ("load: %s: open failed\n", cmd_name[0]);
       goto done; 
     }
 
@@ -417,8 +420,26 @@ load (const char *file_name, void (**eip) (void), void **esp)
   /* Set up stack. */
   if (!setup_stack (esp))
     goto done;
-	printf(">>	[DEBUG] Stack Setup Completed");
+	printf(">>	[DEBUG] Stack Setup Completed\n");
 	
+/* Start address. */
+  *eip = (void (*) (void)) ehdr.e_entry;
+	  success = true;
+
+ done:
+  /* We arrive here whether the load is successful or not. */
+	palloc_free_page(fn_copy);
+	file_close (file);
+  return success;
+}
+
+void construct_cmd_stack(char* file_name, void **esp){
+	bool fl;
+	char *fn_copy;
+	char *olds, *token; /*for strtok_r*/
+	char **argv;
+	int i, j, argc, argv_size;	
+
 	/*error handling*/
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
@@ -446,7 +467,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
 	/*slice argument into tocken*/
 	token = strtok_r(fn_copy, " ", &olds);
 
-	printf(">>	[DEBUG] ARGV STACK Generation Started");
+	printf(">>	[DEBUG] ARGV STACK Generation Started\n");
 	
 	/*generate argv[] (pointer) and argv[][] (actual data)*/
 	argv = (char**) malloc(sizeof(char *) * argc);
@@ -480,22 +501,12 @@ load (const char *file_name, void (**eip) (void), void **esp)
 	/*push return address*/
 	*esp -= 4;	**(uint32_t **)esp = 0;
 	
-	printf(">>	[DEBUG] ARGV STACK Setup Completed");
+	printf(">>	[DEBUG] ARGV STACK Setup Completed\n");
 	
 	free(argv);
 	
 	while(1)
 		hex_dump((uintptr_t) *esp, (const char *) *esp, (uintptr_t) PHYS_BASE - (uintptr_t) *esp, true);
-	
-/* Start address. */
-  *eip = (void (*) (void)) ehdr.e_entry;
-	  success = true;
-
- done:
-  /* We arrive here whether the load is successful or not. */
-	palloc_free_page(fn_copy);
-	file_close (file);
-  return success;
 }
 
 /* load() helpers. */
