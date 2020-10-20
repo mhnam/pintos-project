@@ -87,7 +87,7 @@ start_process (void *file_name_)
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-	printf(">>	[DEBUG] Starting Load\n");
+	printf(">>	[DEBUG] Starting Loading...\n");
   success = load (file_name, &if_.eip, &if_.esp);
 	printf(">>	[DEBUG] Load Completed\n");
 
@@ -323,7 +323,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
   bool success = false;
 	bool fl;
 	int i, j, argc, argv_size;	
-	char *cmd_name, *fn_copy;
+	char *fn_copy;
 	char *olds, *token; /*for strtok_r*/
 	char **argv;
 	
@@ -346,7 +346,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
 		}
 		else{
 			if(fl)	continue;
-			fn_copy[j++] = 0;
+			fn_copy[j++] = 32
 			argc++;
 			fl = true;
 		}
@@ -358,14 +358,14 @@ load (const char *file_name, void (**eip) (void), void **esp)
 	
 	argv_size = j; /*size of argument vector*/
 	
-	/*slice argument into tocken*/
-	token = strtok_r(fn_copy, " ", &olds);
-
 	/*generate argv[] (pointer) and argv[][] (actual data)*/
 	argv = (char**) malloc(sizeof(char *) * argc);
 	
-  for(i = 0; i < argc; i++, token = strtok_r(NULL, " ", &olds))
-		argv[i] = token;
+	/*slice argument into tocken*/
+	argv[0] = strtok_r(fn_copy, " ", &olds); i=1;
+  do{
+		argv[i] = strtok_r(NULL, " ", &olds);
+	}while(argv[i++]);
 	printf(">>	[DEBUG] Argument Parsing Completed\tcmd_name: %s\n", argv[0]);
 	
 	/* Open executable file. */
@@ -454,8 +454,9 @@ load (const char *file_name, void (**eip) (void), void **esp)
 	printf(">>	[DEBUG] Stack Setup Completed\n");
 	
 	printf(">>	[DEBUG] ARGV STACK Generation Started\n");
+	
 	for(i = argc-1; i >= 0; i--){
-		*esp = *esp - strlen(argv[i]) + 1;
+		*esp -= strlen(argv[i]) + 1;
 		strlcpy(*esp, argv[i], strlen(argv[i]) + 1);
 		argv[i] = *esp;
 	}
