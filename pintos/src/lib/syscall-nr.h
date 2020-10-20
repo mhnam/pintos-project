@@ -18,6 +18,8 @@ enum
     SYS_SEEK,                   /* Change position in a file. */
     SYS_TELL,                   /* Report current position in a file. */
     SYS_CLOSE,                  /* Close a file. */
+		SYS_FIBONACCI,							/* Return nth value of Fibonacci seq. */
+		SYS_MAX_OF_FOUR_INT,				/* Return the max among four integers */
 
     /* Project 3 and optionally project 4. */
     SYS_MMAP,                   /* Map a file into memory. */

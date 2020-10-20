@@ -282,8 +282,10 @@ static void
 run_task (char **argv)
 {
   const char *task = argv[1];
+	
+  //argument parsing is required (echo x -> echo)
   
-  printf ("Executing '%s':\n", task);
+	printf ("Executing '%s':\n", task);
 #ifdef USERPROG
   process_wait (process_execute (task));
 #else
