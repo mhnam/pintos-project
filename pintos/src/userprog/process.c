@@ -28,7 +28,7 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 tid_t
 process_execute (const char *file_name) 
 {
-  char *fn_copy;
+  char *fn_copy, *fn_copy2, *thrd_name, *olds;
   tid_t tid;
 
   /* Make a copy of FILE_NAME.
@@ -37,23 +37,17 @@ process_execute (const char *file_name)
   if (fn_copy == NULL)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
-/*
-** argument parsing for process name for thread_create - max 16
-
-  real_fn = palloc_get_page (0);
-  if (real_fn == NULL)
+	
+	/* Let first token of filename be thread name */
+  fn_copy2 = palloc_get_page (0);
+  if (fn_copy2 == NULL)
     return TID_ERROR;
-  for (i = 0; 
-       file_name[i] != '\0' && file_name[i] != ' ' && file_name[i] != '\t'; 
-       ++i)
-    real_fn[i] = file_name[i];
-  real_fn[i] = 0;
+	
+	strlcpy(fn_copy2, file_name, strlen(file_name)+1);
+	thrd_name = strtok_r(fn_copy2, " ", &olds);
 
-  //printf ("[Debug] process_execute () - before thread_create()\n");
-
-*/
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  tid = thread_create (thrd_name, PRI_DEFAULT, start_process, fn_copy);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
 	
@@ -340,8 +334,14 @@ load (const char *file_name, void (**eip) (void), void **esp)
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     goto done;
-	
+
 	/*copy arguments into fn_copy and acquire argc*/
+	/*
+  strlcpy (fn_copy, file_name, strlen(file_name)+1);
+	argv = (char**) malloc(sizeof(char *));
+	argc = 0; i = 0;
+	*/
+
 	for(i = 0, j = 0; file_name[i]; i++){
 		if(file_name[i] != ' ' && file_name != '\t'){
 			fn_copy[j++] = file_name[i];	fl = false;
@@ -359,6 +359,17 @@ load (const char *file_name, void (**eip) (void), void **esp)
 	
 	argv_size = j; /*size of argument vector*/
 	
+	/*slice argument into tocken*/
+/*
+argv[i] = strtok_r(fn_copy, " ", &olds);
+	while(argv[i]){
+		argc++;
+		argv = (char**) realloc(argv, argc); i++;
+		argv[i] = strtok_r(NULL, " ", &olds);
+	}
+	printf(">>	[DEBUG] Argument Parsing Completed\tcmd_name: %s\n", argv[0]);
+*/
+	
 	/*generate argv[] (pointer) and argv[][] (actual data)*/
 	argv = (char**) malloc(sizeof(char *) * argc);
 	
@@ -366,7 +377,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
 	argv[0] = strtok_r(fn_copy, " ", &olds); i=1;
   do{
 		argv[i] = strtok_r(NULL, " ", &olds);
-	}while(argv[i++]);
+	}while(i++<argc);
 	printf(">>	[DEBUG] Argument Parsing Completed\tcmd_name: %s\n", argv[0]);
 	
 	/* Open executable file. */
