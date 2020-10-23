@@ -38,6 +38,7 @@ process_execute (const char *file_name)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
 /*
+** argument parsing for process name for thread_create - max 16
 
   real_fn = palloc_get_page (0);
   if (real_fn == NULL)
@@ -124,6 +125,7 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED) 
 {
+	/*call schedule() and wait till user program executes; if not scheduled halt pintos*/
 	int i;
 	for(i=0; i<1000000000; i++);
 	return -1;
@@ -346,14 +348,13 @@ load (const char *file_name, void (**eip) (void), void **esp)
 		}
 		else{
 			if(fl)	continue;
-			fn_copy[j++] = 32
-			argc++;
+			fn_copy[j++] = 32;	argc++;
 			fl = true;
 		}
 	}
 	
 	if(!fl){
-		fn_copy[j++] = 0; argc++;
+		fn_copy[j++] = 0;	argc++;
 	}
 	
 	argv_size = j; /*size of argument vector*/
