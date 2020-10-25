@@ -3,7 +3,6 @@
 #include <inttypes.h>
 #include <round.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "userprog/gdt.h"
 #include "userprog/pagedir.h"
@@ -17,6 +16,7 @@
 #include "threads/palloc.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include <stdlib.h>
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
@@ -320,7 +320,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
 	bool fl;
 	int i, j, argc, argv_size;	
 	char *fn_copy;
-	char *olds, *token; /*for strtok_r*/
+	char *olds; /*for strtok_r*/
 	char **argv;
 	
   /* Allocate and activate page directory. */

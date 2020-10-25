@@ -1,17 +1,14 @@
 #include "userprog/syscall.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include "threads/vaddr.h"
 
 //THINGS TO DO:
 //	* IMPLEMENT ``GET_ARGUMENT`` TO GET PROPER DATA ADDR FROM USER STACK FOR EACH FUNCTION
 //	* PUT ``CHK_ADDRESS`` INTO ``GET_ARGUMENT`` AND CHK WHETHER ADDR IS PROPER, NOT IN SWITCH ARGUMENT
-
-/*handler*/
-void chk_address(const void *addr);
-static void get_argument(void *esp, int *arg, int count);
-static void syscall_handler(struct intr_frame *);
 
 void
 syscall_init (void) 
@@ -152,7 +149,7 @@ void exit(int status){
   struct thread *cur = thread_current ();
   cur->normal_exit = true;
   cur->exit_code = status;
-  thread_exit();
+  thread_exit();*/
 }
 
 /* create child process
@@ -243,7 +240,7 @@ int fibonacci(int n){
       c = a + b; a = b; b = c;
 	}
 	
-	reuturn c;
+	return c;
 }
 
 int max_of_four_int(int a, int b, int c, int d){
