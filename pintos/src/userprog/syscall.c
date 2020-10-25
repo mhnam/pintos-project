@@ -186,7 +186,7 @@ int wait (pid_t pid){
 int read (int fd, void *buffer, unsigned length){
 	int i;
 	
-		if(fd == 0 && buffer != null){
+		if(fd == 0 && buffer != NULL){
 			for(i = 0; i <= (int)length; i++)
 				*(char*)(buffer + i) = input_getc();
 		return i;

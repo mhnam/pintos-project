@@ -3,7 +3,7 @@
 #include "lib/user/syscall.h"
 #include "devices/shutdown.h"
 #include "devices/input.h"
-#incldue "lib/kernel/console.h"
+#include "lib/kernel/console.h"
 #include "userprog/process.h"
 
 void syscall_init (void);

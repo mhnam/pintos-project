@@ -497,7 +497,7 @@ argv[i] = strtok_r(fn_copy, " ", &olds);
 	
 	free(argv);
 	
-	hex_dump((uintptr_t) *esp, (const char *) *esp, (uintptr_t) PHYS_BASE - (uintptr_t) *esp, true);
+//	hex_dump((uintptr_t) *esp, (const char *) *esp, (uintptr_t) PHYS_BASE - (uintptr_t) *esp, true);
 	
 /* Start address. */
   *eip = (void (*) (void)) ehdr.e_entry;
