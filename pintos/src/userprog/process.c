@@ -82,9 +82,9 @@ start_process (void *file_name_)
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-	printf(">>	[DEBUG] Starting Loading...\n");
+//	printf(">>	[DEBUG] Starting Loading...\n");
   success = load (file_name, &if_.eip, &if_.esp);
-	printf(">>	[DEBUG] Load Completed\n");
+//	printf(">>	[DEBUG] Load Completed\n");
 
 /*
   cur = thread_current ();
@@ -330,7 +330,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
   process_activate ();
 	
 	//argument parsing
-	printf(">>	[DEBUG] Starting Argument Parsing...\n");
+//	printf(">>	[DEBUG] Starting Argument Parsing...\n");
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     goto done;
@@ -378,7 +378,7 @@ argv[i] = strtok_r(fn_copy, " ", &olds);
   do{
 		argv[i] = strtok_r(NULL, " ", &olds);
 	}while(i++<argc);
-	printf(">>	[DEBUG] Argument Parsing Completed\tcmd_name: %s\n", argv[0]);
+//	printf(">>	[DEBUG] Argument Parsing Completed\tcmd_name: %s\n", argv[0]);
 	
 	/* Open executable file. */
   file = filesys_open (argv[0]);
@@ -463,9 +463,9 @@ argv[i] = strtok_r(fn_copy, " ", &olds);
   /* Set up stack. */
   if (!setup_stack (esp))
     goto done;
-	printf(">>	[DEBUG] Stack Setup Completed\n");
+//	printf(">>	[DEBUG] Stack Setup Completed\n");
 	
-	printf(">>	[DEBUG] ARGV STACK Generation Started\n");
+//	printf(">>	[DEBUG] ARGV STACK Generation Started\n");
 	
 	for(i = argc-1; i >= 0; i--){
 		*esp -= strlen(argv[i]) + 1;
@@ -493,12 +493,11 @@ argv[i] = strtok_r(fn_copy, " ", &olds);
 	/*push return address*/
 	*esp -= 4;	**(uint32_t **)esp = 0;
 	
-	printf(">>	[DEBUG] ARGV STACK Setup Completed\n");
+//	printf(">>	[DEBUG] ARGV STACK Setup Completed\n");
 	
 	free(argv);
 	
-	while(1)
-		hex_dump((uintptr_t) *esp, (const char *) *esp, (uintptr_t) PHYS_BASE - (uintptr_t) *esp, true);
+	hex_dump((uintptr_t) *esp, (const char *) *esp, (uintptr_t) PHYS_BASE - (uintptr_t) *esp, true);
 	
 /* Start address. */
   *eip = (void (*) (void)) ehdr.e_entry;
