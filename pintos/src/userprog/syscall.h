@@ -1,16 +1,12 @@
 #ifndef USERPROG_SYSCALL_H
 #define USERPROG_SYSCALL_H
+#include "lib/user/syscall.h"
 
 void syscall_init (void);
 
-/*handler*/
-void chk_address(const void *addr);
-static void get_argument(void *esp, int *arg, int count);
-static void syscall_handler(struct intr_frame *);
-
 /*syscalls*/
-void halt (void) NO_RETURN;
-void exit (int status) NO_RETURN;
+void halt (void);
+void exit (int status);
 pid_t exec (const char *file);
 int wait (pid_t);
 bool create (const char *file, unsigned initial_size);

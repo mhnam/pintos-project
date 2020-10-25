@@ -10,6 +10,11 @@
 //	* IMPLEMENT ``GET_ARGUMENT`` TO GET PROPER DATA ADDR FROM USER STACK FOR EACH FUNCTION
 //	* PUT ``CHK_ADDRESS`` INTO ``GET_ARGUMENT`` AND CHK WHETHER ADDR IS PROPER, NOT IN SWITCH ARGUMENT
 
+/*handler*/
+void chk_address(const void *addr);
+static void get_argument(void *esp, int *arg, int count);
+static void syscall_handler(struct intr_frame *);
+
 void
 syscall_init (void) 
 {
@@ -29,7 +34,7 @@ static void get_argument(void *esp, int *arg, int count){
 }
 
 static void
-syscall_handler (struct intr_frame *f UNUSED) 
+syscall_handler (struct intr_frame *f) 
 {
   printf ("system call!\n");
 	/*check whether esp and ptr are user space; otherwise page fault*/
@@ -103,7 +108,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 			chk_address(f->esp + 24);
 			chk_address(f->esp + 28);
 			chk_address(f->esp + 32);
-      max_of_four_int((int)*(uint32_t *)(f->esp + 4));
+      max_of_four_int((int)*(uint32_t *)(f->esp + 20), (int)*(uint32_t *)(f->esp + 24), (int)*(uint32_t *)(f->esp + 28), (int)*(uint32_t *)(f->esp + 32));
 			break;
 		
 		default:
@@ -166,8 +171,8 @@ pid_t exec (const char *file){
 */
 }
 
-int wait (pid_t){
-	process_wait(pid_t);
+int wait (pid_t pid){
+	return process_wait(pid);
   /* Load syscall arguments.
   pid_t pid = * (pid_t *) SYS_ARG_PTR (arg_top, 0); 
 
