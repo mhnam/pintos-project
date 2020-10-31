@@ -6,6 +6,8 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 
+static int arg_size[SYS_MAX_NUM];
+
 //THINGS TO DO:
 //	* IMPLEMENT ``GET_ARGUMENT`` TO GET PROPER DATA ADDR FROM USER STACK FOR EACH FUNCTION
 //	* PUT ``CHK_ADDRESS`` INTO ``GET_ARGUMENT`` AND CHK WHETHER ADDR IS PROPER, NOT IN SWITCH ARGUMENT
@@ -19,14 +21,31 @@ void
 syscall_init (void) 
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
+	arg_size[SYS_EXIT] = 1;
+	arg_size[SYS_EXEC] = 1;
+	arg_size[SYS_WAIT] = 1;
+	arg_size[SYS_READ] = 3;
+	arg_size[SYS_WRITE] = 3;
+	arg_size[SYS_FIBONACCI] = 1;
+	arg_size[SYS_MAX_OF_FOUR_INT] = 4;
 }
 
 /* check whether given address is user area;
 otherwise exit process (i.e., inbetween 0x8048000~0xc0000000) */
-void chk_address(const void *addr){
-	// true: if user virtual address
-  if(is_user_vaddr(addr)==0)
-		exit(-1);
+void chk_address(struct intr_frame *f){
+	int i, j = 20;
+	int syscall_num = * (uint32_t *) f->esp;
+	if(arg_size[syscall_num] == 1){
+		if(is_user_vaddr(f->esp+4) == 0)
+			exit(-1);
+	}
+	else{
+		foreach(i=0; i<arg_size[syscall_num]; i++){
+			if(is_user_vaddr(f->esp + j) == 0)
+				exit(-1);
+			j+=4;
+		}
+	}
 }
 
 static void get_argument(void *esp, int *arg, int count){
@@ -45,28 +64,28 @@ syscall_handler (struct intr_frame *f)
 	
 	/*getting syscall num from user stack*/
   int syscall_num = * (uint32_t *) f->esp;
+	chk_address(f);
+	
 	switch(syscall_num){
 		/*save return to eax*/
     case SYS_HALT:
-			halt();
+//			halt();
+			shutdown_power_off();
 			break;
 			
 		case SYS_EXIT:
-			chk_address(f->esp + 4);
-			exit(*(uint32_t *)(f->esp + 4));
+			syscall_exit(f);
 			break;
 			
 		case SYS_EXEC:
-			chk_address(f->esp + 4);
-      f->eax = exec((const char *)*(uint32_t *)(f->esp + 4));
+			syscall_exec(f);
 			break;
 			
 		case SYS_WAIT:
-			chk_address(f->esp + 4);
-      f->eax = wait((pid_t)*(uint32_t *)(f->esp + 4));
+			syscall_wait(f);
 			break;
 			
-		case SYS_CREATE: 
+		case SYS_CREATE:
 			break;
 			
 		case SYS_REMOVE: 
@@ -79,17 +98,11 @@ syscall_handler (struct intr_frame *f)
 			break;
 			
 		case SYS_READ: 
-			chk_address(f->esp + 20);
-			chk_address(f->esp + 24);
-			chk_address(f->esp + 28);
-			f->eax = read((int)*(uint32_t *)(f->esp + 20), (void *)*(uint32_t *)(f->esp + 24), (unsigned)*((uint32_t *)(f->esp + 28)));
+			syscall_read(f);
 			break;
 			
 		case SYS_WRITE:
-			chk_address(f->esp + 20);
-			chk_address(f->esp + 24);
-			chk_address(f->esp + 28);
-			f->eax = write((int)*(uint32_t *)(f->esp + 20), (void *)*(uint32_t *)(f->esp + 24), (unsigned)*((uint32_t *)(f->esp + 28)));
+			syscall_write(f);
 			break;
 			
 		case SYS_SEEK: 
@@ -102,20 +115,12 @@ syscall_handler (struct intr_frame *f)
 			break;
 			
 		case SYS_FIBONACCI:
-			chk_address(f->esp + 4);
-      f->eax = fibonacci((int)*(uint32_t *)(f->esp + 4));
+			syscall_fibonacci(f);
 			break;
 			
 		case SYS_MAX_OF_FOUR_INT:
-			chk_address(f->esp + 20);
-			chk_address(f->esp + 24);
-			chk_address(f->esp + 28);
-			chk_address(f->esp + 32);
-      f->eax = max_of_four_int((int)*(uint32_t *)(f->esp + 20), (int)*(uint32_t *)(f->esp + 24), (int)*(uint32_t *)(f->esp + 28), (int)*(uint32_t *)(f->esp + 32));
+			syscall_max_of_four_int(f);
 			break;
-		
-		//default:
-			//thread_exit ();
 	}
 	
 	/*
@@ -140,121 +145,82 @@ syscall_handler (struct intr_frame *f)
   */
 }
 
-void halt(void){
-	shutdown_power_off();
-}
-
-void exit(int status){
-	/* get thread structure */
-	/* printout termination message */
-	/* exit thread */
+void syscall_exit (struct intr_frame *f){
+	int status;
+	status = *(uint32_t *)(f->esp + 4);
 	printf("%s: exit(%d)\n", thread_name(), status);
 	thread_current()->exit_status = status;
 	thread_exit();
-	
-  /* Load syscall arguments
-  int status = * (int *) SYS_ARG_PTR (arg_top, 0);
-
-  struct thread *cur = thread_current ();
-  cur->normal_exit = true;
-  cur->exit_code = status;
-  thread_exit();*/
 }
 
 /* create child process
 uese process_execute in userprog/process.c */
-pid_t exec (const char *file){
-	return process_execute(file);
-  /* Load syscall arguments 
-  const char *file = * (char **) SYS_ARG_PTR (arg_top, 0);
-
-  if (! chk_valid_ptr (file))
-    SYS_RETURN (-1);
-
-  SYS_RETURN ( process_execute(file) );
-*/
+void syscall_exec (struct intr_frame *f){
+	const char *file = (const char *)*(uint32_t *)(f->esp + 4);
+	f->eax = process_execute(file);
 }
 
-int wait (pid_t pid){
-	return process_wait(pid);
-  /* Load syscall arguments.
-  pid_t pid = * (pid_t *) SYS_ARG_PTR (arg_top, 0); 
-
-  SYS_RETURN ( process_wait(pid) );
-	*/
+void syscall_wait (struct intr_frame *f){
+	pid_t = (pid_t)*(uint32_t *)(f->esp + 4);
+	f->eax = process_wait(pid);
 }
 
-int read (int fd, void *buffer, unsigned length){
-	int i;
+void syscall_read (struct intr_frame *f){
+	int fd, i;
+	void *buffer;
+	unsigned length;
 	
-		if(fd == 0 && buffer != NULL){
-			for(i = 0; i <= (int)length; i++)
-				*(char*)(buffer + i) = input_getc();
-		return i;
-		}	
+	fd = (int)*(uint32_t *)(f->esp + 20);
+	buffer = (void *)*(uint32_t *)(f->esp + 24);
+	length = (unsigned)*((uint32_t *)(f->esp + 28));
 	
-		else return -1;
-  // must be modified...
-  /* Load syscall arguments
-  int fd = * (int *) SYS_ARG_PTR (arg_top, 0);
-  void *buffer = * (void **) SYS_ARG_PTR (arg_top, 1);
-  unsigned size = * (unsigned *) SYS_ARG_PTR (arg_top, 2);
-
-  int i;
-
-  if (! chk_valid_ptr (buffer))
-    SYS_RETURN (-1);
-
-  if (fd == 0 && buffer != NULL)
-    {
-      for(i = 0; i < size; ++i)
-        *(char*)(buffer + i) = input_getc();
-      SYS_RETURN (i);
-    }
-
-  SYS_RETURN (-1);*/
+	if(fd == 0 && buffer != NULL){
+		for(i = 0; i <= (int)length; i++)
+			*(char*)(buffer + i) = input_getc();
+	f->eax = i;
+	}	
+	else f->eax = -1;
 }
 
-int write (int fd, const void *buffer, unsigned length){
+void syscall_write (struct intr_frame *f){
+	int fd;
+	void *buffer;
+	unsigned length;
+	
+	fd = (int)*(uint32_t *)(f->esp + 20);
+	buffer = (void *)*(uint32_t *)(f->esp + 24);
+	length = (unsigned)*((uint32_t *)(f->esp + 28));
+	
 	if(fd == 1){
 		putbuf(buffer, length);
-		return length;
+		f->eax = length;
 	}
-	return -1;
-  /* Load syscall arguments
-  int fd = * (int *) SYS_ARG_PTR (arg_top, 0);
-  void *buffer = * (void **) SYS_ARG_PTR (arg_top, 1);
-  unsigned size = * (unsigned *) SYS_ARG_PTR (arg_top, 2);
-
-  if (! chk_valid_ptr (buffer))
-    SYS_RETURN (-1);
-
-  if (fd == 1 && buffer != NULL)
-    {
-      putbuf (buffer, size);
-      SYS_RETURN (size);
-    }
-
-  SYS_RETURN (0);*/
+	
+	f->eax = -1;
 }
 
-int fibonacci(int n){
+void syscall_fibonacci (struct intr_frame *f){
+	int n = (int)*(uint32_t *)(f->esp + 4);
   int a = 0;
 	int b = 1;
 	int c = 1;
 	int i;
 
   if(n == 1) 
-    return 1;
+    f->eax = 1;
 
   for(i = 1; i < n; i++){
       c = a + b; a = b; b = c;
 	}
 	
-	return c;
+	f->eax = c;
 }
 
-int max_of_four_int(int a, int b, int c, int d){
+int syscall_max_of_four_int (struct intr_frame *f){
+	int a = (int)*(uint32_t *)(f->esp + 20);
+	int b = (int)*(uint32_t *)(f->esp + 24);
+	int c = (int)*(uint32_t *)(f->esp + 28);
+	int d = (int)*(uint32_t *)(f->esp + 32);
 	int max = a;
 	
 	if(b > max)
@@ -264,5 +230,5 @@ int max_of_four_int(int a, int b, int c, int d){
 	if(d > max)
 		max = d;
 	
-	return max;
+	f->eax = max;
 }
