@@ -13,7 +13,7 @@ static int arg_size[SYS_MAX_NUM];
 //	* PUT ``CHK_ADDRESS`` INTO ``GET_ARGUMENT`` AND CHK WHETHER ADDR IS PROPER, NOT IN SWITCH ARGUMENT
 
 /*handler*/
-void chk_address(const void *addr);
+void chk_address(struct intr_frame *f);
 static void get_argument(void *esp, int *arg, int count);
 static void syscall_handler(struct intr_frame *);
 
@@ -40,7 +40,7 @@ void chk_address(struct intr_frame *f){
 			exit(-1);
 	}
 	else{
-		foreach(i=0; i<arg_size[syscall_num]; i++){
+		for(i=0; i<arg_size[syscall_num]; i++){
 			if(is_user_vaddr(f->esp + j) == 0)
 				exit(-1);
 			j+=4;
@@ -49,7 +49,6 @@ void chk_address(struct intr_frame *f){
 }
 
 static void get_argument(void *esp, int *arg, int count){
-	
 }
 
 static void
@@ -161,7 +160,8 @@ void syscall_exec (struct intr_frame *f){
 }
 
 void syscall_wait (struct intr_frame *f){
-	pid_t = (pid_t)*(uint32_t *)(f->esp + 4);
+	pid_t pid;
+	pid = (pid_t)*(uint32_t *)(f->esp + 4);
 	f->eax = process_wait(pid);
 }
 

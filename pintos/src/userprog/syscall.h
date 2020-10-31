@@ -5,6 +5,7 @@
 #include "devices/input.h"
 #include "lib/kernel/console.h"
 #include "userprog/process.h"
+#define SYS_MAX_NUM 30
 
 void syscall_init (void);
 
