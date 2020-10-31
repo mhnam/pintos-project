@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "threads/synch.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -98,10 +99,10 @@ struct thread
     uint32_t *pagedir;                  /* Page directory. */
 	
 	/*elements for process wait, and exit*/
-	struct sempahore wait_child;
-	struct semaphore exit_child;
-	struct list child;
-	struct list_elem child_elem;
+	struct semaphore wait_child; /*held by child while thread is alive*/
+	struct semaphore exit_child; /*held by parent while parent is not waiting child*/
+	struct list child_list; /*list for managin child*/
+	struct list_elem child_elem; /*actual child list*/
 	int exit_status;
 #endif
 

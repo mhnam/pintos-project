@@ -30,6 +30,7 @@ process_execute (const char *file_name)
 {
   char *fn_copy, *fn_copy2, *thrd_name, *olds;
   tid_t tid;
+	struct file *file = NULL;
 
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
@@ -45,6 +46,9 @@ process_execute (const char *file_name)
 	
 	strlcpy(fn_copy2, file_name, strlen(file_name)+1);
 	thrd_name = strtok_r(fn_copy2, " ", &olds);
+  file = filesys_open (thrd_name);
+  if (file == NULL)
+		return -1;
 
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (thrd_name, PRI_DEFAULT, start_process, fn_copy);
@@ -129,52 +133,25 @@ process_wait (tid_t child_tid UNUSED)
    // parent is blocking until child is terminated with exit...
    // if child state is terminated, return child's return address.
 
-  struct thread *current;
+  struct thread *cur = thread_current ();
 	struct thread *t = NULL;
-	struct thread *child = NULL;
+//	struct thread *child = NULL;
   struct list_elem *e;
   int exit_status;
 
-  current = thread_current ();
-
-  for (e = list_begin (&current->child_list); e != list_end (&current->child_list); e = list_next(e)){
-    t = list_entry (e, struct thread, child_elem);
+  for (e = list_begin(&cur->child_list); e != list_end(&cur->child_list); e = list_next(e)){
+    t = list_entry(e, struct thread, child_elem);
     if (t == NULL)
 			return -1;
 		else if (t->tid == child_tid){
-			sema_down(&(t->wait_child));
+			sema_down(&t->wait_child); /*wait for child dead*/
 			exit_status = t->exit_status;
-			list_remove(&(t->child_elem));
-			sema_up(&(t->exit_child));
+			list_remove(&t->child_elem);
+			sema_up(&t->exit_child); /*allow child to free their list*/
 			return exit_status;
     }
 	}
 	return -1;
-}
-/*
-	if (child->status == THREAD_DYING)
-    {
-      if (child->normal_exit == true)
-        {
-          exit_code = child->exit_code;
-          sema_up (&child->exit_sema);
-        }
-      else
-        {
-          sema_up (&child->exit_sema);
-          return -1;
-        }
-    }
-  else
-    {
-      sema_down (&child->wait_sema);
-      exit_status = child->exit_code;
-      sema_up (&child->exit_sema);
-    }
-  
-  return exit_code;
-*/
-  return -1;
 }
 
 /* Free the current process's resources. */
@@ -200,23 +177,11 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
-/*
-   // free resources that current process owned.
-
-  for (e = list_begin (&cur->child_list); 
-       e != list_end (&cur->child_list); e = list_next(e)) 
-    {
-      struct thread *c = list_entry (e, struct thread, child_elem);
-      sema_up (&c->exit_sema);
-    }
-
-  printf ("%s: exit(%d)\n", cur->name, cur->exit_code);
-*/
 
   // if parent is blocking for waiting me, wake parent
 
-  sema_up(&(cur->wait_child));
-	sema_down(&(cur->exit_child));
+  sema_up(&cur->wait_child); /*allow parent to exit as child is dead*/
+	sema_down(&cur->exit_child); /*wait till parent collect child's exit status*/
 }
 
 /* Sets up the CPU for running user code in the current
