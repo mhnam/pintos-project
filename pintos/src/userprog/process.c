@@ -294,26 +294,19 @@ load (const char *file_name, void (**eip) (void), void **esp)
   process_activate ();
 	
 	//argument parsing
-//	printf(">>	[DEBUG] Starting Argument Parsing...\n");
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     goto done;
 
-	/*copy arguments into fn_copy and acquire argc*/
-	/*
-  strlcpy (fn_copy, file_name, strlen(file_name)+1);
-	argv = (char**) malloc(sizeof(char *));
-	argc = 0; i = 0;
-	*/
-
+	/* copy arguments into fn_copy and acquire argc */
 	for(i = 0, j = 0; file_name[i]; i++){
 		if(file_name[i] != ' ' && file_name != '\t'){
 			fn_copy[j++] = file_name[i];	fl = false;
 		}
 		else{
 			if(fl)	continue;
-			fn_copy[j++] = 32;	argc++;
-			fl = true;
+			fn_copy[j++] = 32;	fl = true;
+			argc++;
 		}
 	}
 	
@@ -323,28 +316,16 @@ load (const char *file_name, void (**eip) (void), void **esp)
 	
 	argv_size = j; /*size of argument vector*/
 	
-	/*slice argument into tocken*/
-/*
-argv[i] = strtok_r(fn_copy, " ", &olds);
-	while(argv[i]){
-		argc++;
-		argv = (char**) realloc(argv, argc); i++;
-		argv[i] = strtok_r(NULL, " ", &olds);
-	}
-	printf(">>	[DEBUG] Argument Parsing Completed\tcmd_name: %s\n", argv[0]);
-*/
-	
-	/*generate argv[] (pointer) and argv[][] (actual data)*/
+	/* generate argv[] (pointer) and argv[][] (actual data) */
 	argv = (char**) malloc(sizeof(char *) * argc);
 	
-	/*slice argument into tocken*/
+	/* slice argument into tocken */
 	argv[0] = strtok_r(fn_copy, " ", &olds); i=1;
   do{
 		argv[i] = strtok_r(NULL, " ", &olds);
 	}while(i++<argc);
-//	printf(">>	[DEBUG] Argument Parsing Completed\tcmd_name: %s\n", argv[0]);
 	
-	/* Open executable file. */
+	/* Open executable file */
   file = filesys_open (argv[0]);
   if (file == NULL) 
     {
@@ -427,17 +408,15 @@ argv[i] = strtok_r(fn_copy, " ", &olds);
   /* Set up stack. */
   if (!setup_stack (esp))
     goto done;
-//	printf(">>	[DEBUG] Stack Setup Completed\n");
 	
-//	printf(">>	[DEBUG] ARGV STACK Generation Started\n");
-	
+	/* push argv */
 	for(i = argc-1; i >= 0; i--){
 		*esp -= strlen(argv[i]) + 1;
 		strlcpy(*esp, argv[i], strlen(argv[i]) + 1);
 		argv[i] = *esp;
 	}
 	
-	/*push align, and null*/
+	/* push align, and null */
 	if(argv_size % 4 != 0)
 		*esp = *esp - (4 - argv_size % 4);
 	*esp -= 4;
@@ -456,11 +435,9 @@ argv[i] = strtok_r(fn_copy, " ", &olds);
 
 	/*push return address*/
 	*esp -= 4;	**(uint32_t **)esp = 0;
-	
-//	printf(">>	[DEBUG] ARGV STACK Setup Completed\n");
-	
+
 	free(argv);
-	
+
 //	hex_dump((uintptr_t) *esp, (const char *) *esp, (uintptr_t) PHYS_BASE - (uintptr_t) *esp, true);
 	
 /* Start address. */
