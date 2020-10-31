@@ -120,40 +120,39 @@ int
 process_wait (tid_t child_tid UNUSED) 
 {
 	/*call schedule() and wait till user program executes; if not scheduled halt pintos*/
-	int i;
-	for(i=0; i<1000000000; i++);
-	return -1;
-/*
+//	int i;
+//	for(i=0; i<1000000000; i++);
+//	return -1;
 
    // child_tid -> invalid ( nothing or not child ) : return -1
    // child_tid -> child is terminated without exit : return -1
    // parent is blocking until child is terminated with exit...
    // if child state is terminated, return child's return address.
 
-
-  struct thread *cur, *child = NULL;
+  struct thread *current;
+	struct thread *t = NULL;
+	struct thread *child = NULL;
   struct list_elem *e;
-  int exit_code;
+  int exit_status;
 
-  cur = thread_current ();
+  current = thread_current ();
 
-  for (e = list_begin (&cur->child_list); 
-       e != list_end (&cur->child_list); e = list_next(e)) 
-    {
-      struct thread *c = list_entry (e, struct thread, child_elem);
-      if (c->tid == child_tid)
-        {
-          child = c;
-          break;
-        }
+  for (e = list_begin (&current->child_list); e != list_end (&current->child_list); e = list_next(e)){
+    t = list_entry (e, struct thread, child_elem);
+    if (t == NULL)
+			return -1;
+		else if (t->tid == child_tid){
+			sema_down(&(t->wait_child));
+			exit_status = t->exit_status;
+			list_remove(&(t->child_elem));
+			sema_up(&(t->exit_child));
+			return exit_status;
     }
-
-  if (child == NULL)
-      return -1;
-
-  list_remove (e);
-
-  if (child->status == THREAD_DYING)
+	}
+	return -1;
+}
+/*
+	if (child->status == THREAD_DYING)
     {
       if (child->normal_exit == true)
         {
@@ -169,7 +168,7 @@ process_wait (tid_t child_tid UNUSED)
   else
     {
       sema_down (&child->wait_sema);
-      exit_code = child->exit_code;
+      exit_status = child->exit_code;
       sema_up (&child->exit_sema);
     }
   
@@ -212,12 +211,12 @@ process_exit (void)
     }
 
   printf ("%s: exit(%d)\n", cur->name, cur->exit_code);
+*/
 
+  // if parent is blocking for waiting me, wake parent
 
-  // if parent is blocking for waiting me, wake parent.
-
-  sema_up (&cur->wait_sema);
-  sema_down (&cur->exit_sema);*/
+  sema_up(&(cur->wait_child));
+	sema_down(&(cur->exit_child));
 }
 
 /* Sets up the CPU for running user code in the current

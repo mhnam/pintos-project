@@ -63,7 +63,7 @@ syscall_handler (struct intr_frame *f)
 			
 		case SYS_WAIT:
 			chk_address(f->esp + 4);
-//      f->eax = wait((pid_t)*(uint32_t *)(f->esp + 4));
+      f->eax = wait((pid_t)*(uint32_t *)(f->esp + 4));
 			break;
 			
 		case SYS_CREATE: 
@@ -149,6 +149,7 @@ void exit(int status){
 	/* printout termination message */
 	/* exit thread */
 	printf("%s: exit(%d)\n", thread_name(), status);
+	thread_current() -> exit_status = status;
 	thread_exit();
 	
   /* Load syscall arguments
