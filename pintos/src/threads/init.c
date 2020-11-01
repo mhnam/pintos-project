@@ -282,16 +282,20 @@ static void
 run_task (char **argv)
 {
   const char *task = argv[1];
+	const char *fn_copy, *task1, *olds
 	
-  //argument parsing is required (echo x -> echo)
-  
-	printf ("Executing '%s':\n", task);
+  fn_copy = palloc_get_page (0);
+	strlcpy(fn_copy, task, strlen(task)+1);
+	task1 = strtok_r(fn_copy, " ", &olds);
+	
+	printf ("Executing '%s':\n", task1);
 #ifdef USERPROG
-  process_wait (process_execute (task));
+	//task1 -> task if there is any prob.
+  process_wait (process_execute (task1));
 #else
   run_test (task);
 #endif
-  printf ("Execution of '%s' complete.\n", task);
+  printf ("Execution of '%s' complete.\n", task1);
 }
 
 /* Executes all of the actions specified in ARGV[]
