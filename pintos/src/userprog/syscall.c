@@ -36,7 +36,7 @@ void chk_address(struct intr_frame *f){
 	int i, j = 20;
 	int syscall_num = * (uint32_t *) f->esp;
 	if(arg_size[syscall_num] == 1){
-		if(is_user_vaddr(f->esp+4) == 0)
+		if(is_user_vaddr(f->esp + 4) == 0)
 			exit(-1);
 	}
 	else{

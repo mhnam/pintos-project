@@ -282,7 +282,7 @@ static void
 run_task (char **argv)
 {
   const char *task = argv[1];
-	const char *fn_copy, *task1, *olds
+	char *fn_copy, *task1, *olds;
 	
   fn_copy = palloc_get_page (0);
 	strlcpy(fn_copy, task, strlen(task)+1);
@@ -290,8 +290,7 @@ run_task (char **argv)
 	
 	printf ("Executing '%s':\n", task1);
 #ifdef USERPROG
-	//task1 -> task if there is any prob.
-  process_wait (process_execute (task1));
+  process_wait (process_execute (task));
 #else
   run_test (task);
 #endif
