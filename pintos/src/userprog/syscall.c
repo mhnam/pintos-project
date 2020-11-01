@@ -8,13 +8,14 @@
 
 static int arg_size[SYS_MAX_NUM];
 
-//THINGS TO DO:
-//	* IMPLEMENT ``GET_ARGUMENT`` TO GET PROPER DATA ADDR FROM USER STACK FOR EACH FUNCTION
-//	* PUT ``CHK_ADDRESS`` INTO ``GET_ARGUMENT`` AND CHK WHETHER ADDR IS PROPER, NOT IN SWITCH ARGUMENT
+/*****
+THINGS TO DO:
+* IMPLEMENT ``GET_ARGUMENT`` TO GET PROPER DATA ADDR FROM USER STACK FOR EACH FUNCTION
+*****/
 
 /*handler*/
 void chk_address(struct intr_frame *f);
-static void get_argument(void *esp, int *arg, int count);
+//static void get_argument(void *esp, int *arg, int count);
 static void syscall_handler(struct intr_frame *);
 
 void
@@ -48,22 +49,20 @@ void chk_address(struct intr_frame *f){
 	}
 }
 
+/*
 static void get_argument(void *esp, int *arg, int count){
+
 }
+*/
 
 static void
 syscall_handler (struct intr_frame *f) 
 {
-//  printf ("system call!\n");
-//  printf("syscall : %d\n", *(uint32_t *)(f->esp));
-//  hex_dump(f->esp, f->esp, 100, 1); 
-	/*check whether esp and ptr are user space; otherwise page fault*/
-	
-	/*user stack data -> kernel space*/
-	
-	/*getting syscall num from user stack*/
-  int syscall_num = * (uint32_t *) f->esp;
+	//check whether esp and ptr are user space; otherwise page fault
 	chk_address(f);
+
+	//getting syscall num from user stack
+  int syscall_num = * (uint32_t *) f->esp;
 	
 	switch(syscall_num){
 		/*save return to eax*/

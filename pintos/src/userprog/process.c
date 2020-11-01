@@ -90,12 +90,6 @@ start_process (void *file_name_)
   success = load (file_name, &if_.eip, &if_.esp);
 //	printf(">>	[DEBUG] Load Completed\n");
 
-/*
-  cur = thread_current ();
-  cur->load_success = success;
-  sema_up (&cur->wait_sema);
-*/
-	
   /* If load failed, quit. */
   palloc_free_page (file_name);
 	if(!success)
@@ -124,18 +118,17 @@ int
 process_wait (tid_t child_tid UNUSED) 
 {
 	/*call schedule() and wait till user program executes; if not scheduled halt pintos*/
-//	int i;
-//	for(i=0; i<1000000000; i++);
-//	return -1;
+	//	int i;
+	//	for(i=0; i<1000000000; i++);
+	//	return -1;
 
-   // child_tid -> invalid ( nothing or not child ) : return -1
-   // child_tid -> child is terminated without exit : return -1
-   // parent is blocking until child is terminated with exit...
-   // if child state is terminated, return child's return address.
+	// child_tid -> invalid ( nothing or not child ) : return -1
+	// child_tid -> child is terminated without exit : return -1
+	// parent is blocking until child is terminated with exit...
+	// if child state is terminated, return child's return address.
 
   struct thread *cur = thread_current ();
 	struct thread *t = NULL;
-//	struct thread *child = NULL;
   struct list_elem *e;
   int exit_status;
 
@@ -177,8 +170,6 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
-
-  // if parent is blocking for waiting me, wake parent
 
   sema_up(&cur->wait_child); /*allow parent to exit as child is dead*/
 	sema_down(&cur->exit_child); /*wait till parent collect child's exit status*/
