@@ -29,6 +29,13 @@ syscall_init (void)
 	arg_size[SYS_WRITE] = 3;
 	arg_size[SYS_FIBONACCI] = 1;
 	arg_size[SYS_MAX_OF_FOUR_INT] = 4;
+	arg_size[SYS_CREATE] = 2;
+	arg_size[SYS_REMOVE] = 1;
+	arg_size[SYS_OPEN] = 1;
+	arg_size[SYS_FILESIZE] = 1;
+	arg_size[SYS_SEEK] = 2;
+	arg_size[SYS_TELL] = 1;
+	arg_size[SYS_CLOSE] = 1;
 }
 
 /* check whether given address is user area;
@@ -82,16 +89,20 @@ syscall_handler (struct intr_frame *f)
       f->eax = wait((pid_t)*(uint32_t *)(f->esp + 4));
 			break;
 			
-		case SYS_CREATE: 
+		case SYS_CREATE:
+      f->eax = create((const char *)*(uint32_t *)(f->esp + 4), (unsigned)*(uint32_t *)(f->esp + 8));
 			break;
 			
-		case SYS_REMOVE: 
+		case SYS_REMOVE:
+      f->eax = remove((const char *)*(uint32_t *)(f->esp + 4));
 			break;
 			
 		case SYS_OPEN: 
+      f->eax = open((pid_t)*(uint32_t *)(f->esp + 4));
 			break;
 			
 		case SYS_FILESIZE: 
+      f->eax = filesize((pid_t)*(uint32_t *)(f->esp + 4));
 			break;
 			
 		case SYS_READ: 
@@ -103,12 +114,15 @@ syscall_handler (struct intr_frame *f)
 			break;
 			
 		case SYS_SEEK: 
+      f->eax = seek((int)*(uint32_t *)(f->esp + 4), (unsigned)*(uint32_t *)(f->esp + 8));
 			break;
 			
 		case SYS_TELL: 
+      f->eax = tell((int)*(uint32_t *)(f->esp + 4));
 			break;
 			
 		case SYS_CLOSE: 
+      f->eax = close((int)*(uint32_t *)(f->esp + 4));
 			break;
 			
 		case SYS_FIBONACCI:
@@ -127,8 +141,14 @@ void halt(void){
 }
 
 void exit(int status){
+	int i = 3; /*why 3??*/
 	printf("%s: exit(%d)\n", thread_name(), status);
 	thread_current()->exit_status = status;
+	do{
+		if(!thread_current()->fd[i])
+			close(i);
+		i++;
+	}while(i<=128);
 	thread_exit();
 }
 
@@ -189,4 +209,36 @@ int max_of_four_int(int a, int b, int c, int d){
 		max = d;
 	
 	return max;
+}
+
+bool create (const char *file, unsigned initial_size){
+	return filesys_create(file, initial_size);
+}
+
+bool remove (const char *file){
+	return filesys_remove(file);
+}
+
+int open (const char *file){
+	
+}
+
+int filesize (int fd){
+  struct thread *cur = thread_current ();
+	return file_length(cur->fd[fd]);
+}
+
+void seek (int fd, unsigned position){
+  struct thread *cur = thread_current ();
+	return file_seek(cur->fd[fd], position);
+}
+
+unsigned tell (int fd){
+  struct thread *cur = thread_current ();
+	return file_tell(cur->fd[fd]);
+}
+
+void close (int fd){
+  struct thread *cur = thread_current ();
+	return file_close(cur->fd[fd]);
 }
