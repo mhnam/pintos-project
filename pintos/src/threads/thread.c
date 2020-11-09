@@ -452,7 +452,8 @@ static void
 init_thread (struct thread *t, const char *name, int priority)
 {
   enum intr_level old_level;
-
+	int i;
+	
   ASSERT (t != NULL);
   ASSERT (PRI_MIN <= priority && priority <= PRI_MAX);
   ASSERT (name != NULL);
@@ -469,7 +470,7 @@ init_thread (struct thread *t, const char *name, int priority)
   intr_set_level (old_level);
 	
 	#ifdef USERPROG
-	for(int i=0; i<=128; ++i)
+	for(i=0; i<=128; ++i)
 		t->fd[i] = NULL;
 	/*enroll current thread as child of running thread*/
 		list_init(&t->child_list);
