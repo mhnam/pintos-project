@@ -5,6 +5,7 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include "file/file.h"
 
 static int arg_size[SYS_MAX_NUM];
 
@@ -114,7 +115,7 @@ syscall_handler (struct intr_frame *f)
 			break;
 			
 		case SYS_SEEK: 
-      f->eax = seek((int)*(uint32_t *)(f->esp + 4), (unsigned)*(uint32_t *)(f->esp + 8));
+      seek((int)*(uint32_t *)(f->esp + 4), (unsigned)*(uint32_t *)(f->esp + 8));
 			break;
 			
 		case SYS_TELL: 
@@ -122,7 +123,7 @@ syscall_handler (struct intr_frame *f)
 			break;
 			
 		case SYS_CLOSE: 
-      f->eax = close((int)*(uint32_t *)(f->esp + 4));
+      close((int)*(uint32_t *)(f->esp + 4));
 			break;
 			
 		case SYS_FIBONACCI:
@@ -148,7 +149,7 @@ void exit(int status){
 		if(!thread_current()->fd[i])
 			close(i);
 		i++;
-	}while(i<=128);
+	}while(i<128);
 	thread_exit();
 }
 
@@ -165,19 +166,27 @@ int wait (pid_t pid){
 int read (int fd, void *buffer, unsigned length){
 	int i;
 	
-		if(fd == 0 && buffer != NULL){
-			for(i = 0; i <= (int)length; i++)
-				*(char*)(buffer + i) = input_getc();
-		return i;
-		}	
-	
-		else return -1;
+	if(fd == 0 && buffer != NULL){
+		for(i = 0; i <= (int)length; i++)
+			*(char*)(buffer + i) = input_getc();
+	return i;
+	}
+	else if(fd > 2){
+  	struct thread *cur = thread_current ();
+		return file_read(cur->fd[fd], buffer, length);
+	}
+
+	else return -1;
 }
 
 int write (int fd, const void *buffer, unsigned length){
 	if(fd == 1){
 		putbuf(buffer, length);
 		return length;
+	}
+	else if(fd > 2){
+  	struct thread *cur = thread_current ();
+		return file_write(cur->fd[fd], buffer, length);
 	}
 	return -1;
 }
@@ -220,7 +229,19 @@ bool remove (const char *file){
 }
 
 int open (const char *file){
-	
+	int i = 3;
+	struct file* fp = filesys_open(file);
+	if(fp){
+		do{
+			if(!thread_current()->fd[i]){
+				thread_current()->fd[i] = fp;
+				return i;
+			}
+		}while(i<128);
+	}
+	else
+		return -1;
+	return -1;
 }
 
 int filesize (int fd){

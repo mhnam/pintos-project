@@ -469,7 +469,7 @@ init_thread (struct thread *t, const char *name, int priority)
   intr_set_level (old_level);
 	
 	#ifdef USERPROG
-	for(i=0; i<=128; ++i)
+	for(int i=0; i<=128; ++i)
 		t->fd[i] = NULL;
 	/*enroll current thread as child of running thread*/
 		list_init(&t->child_list);
