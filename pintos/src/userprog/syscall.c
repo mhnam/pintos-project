@@ -20,9 +20,7 @@ struct file
     bool deny_write;            /* Has file_deny_write() been called? */
   };
 
-struct semaphore readsema;
-struct semaphore wrtsema;
-int readcnt;
+struct semaphore mutex;
 
 /*****
 THINGS TO DO:
@@ -53,9 +51,7 @@ syscall_init (void)
 	arg_size[SYS_TELL] = 1;
 	arg_size[SYS_CLOSE] = 1;
 	
-	sema_init(&readsema, 1);
-	sema_init(&wrtsema, 1);
-	readcnt = 0;
+	sema_init(&mutex, 1);
 }
 
 /* check whether given address is user area;
@@ -223,10 +219,11 @@ int open (const char *file){
   int i;
 	if(!file)	exit(-1);
 	if(!is_user_vaddr(file)) exit(-1);
-	
+
+	sema_down(&mutex);
 	struct file* fp = filesys_open(file);
   if (fp == NULL) {
-      return -1; 
+      return -1;
   } else {
     for (i = 3; i < 128; i++) {
       if (thread_current()->fd[i] == NULL) {
@@ -237,6 +234,7 @@ int open (const char *file){
       }
     }
 	}
+	sema_up(&mutex);
   return -1;
 }
 
@@ -249,7 +247,7 @@ int filesize (int fd){
 int read (int fd, void *buffer, unsigned length){
   int i;
 	if(!is_user_vaddr(buffer)) exit(-1);
-	
+	sema_down(&mutex);
   if (fd == 0) {
     for (i = 0; i < length; i ++) {
       if (((char *)buffer)[i] == '\0') {
@@ -259,17 +257,8 @@ int read (int fd, void *buffer, unsigned length){
   } else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
 		if(!file)	exit(-1);
-		sema_down(&readsema);
-		readcnt++;
-		if(readcnt == 1) sema_down(&wrtsema);
-		sema_up(&readsema);
-		
     return file_read(file, buffer, length);
-		
-		sema_down(&readsema);
-		readcnt--;
-		if(readcnt == 0) sema_up(&wrtsema);
-		sema_up(&readsema);
+		sema_up(&mutex);
   }
   return i;
 }
@@ -295,13 +284,15 @@ int write (int fd, const void *buffer, unsigned length){
     return length;
   }
 	else if (fd > 2) {
-		sema_down(&wrtsema);
 		struct file* file = thread_current()->fd[fd];
-		if(!file)	exit(-1);
+		if(!file){
+			sema_down(&mutex);
+			exit(-1);
+		}	
 		if(thread_current()->fd[fd]->deny_write)
 			file_deny_write(thread_current()->fd[fd]);
 		return file_write(file, buffer, length);
-		sema_up(&wrtsema);
+		sema_up(&mutex);
   }
   return -1; 
 }
