@@ -223,10 +223,9 @@ int open (const char *file){
 
 	lock_acquire(&mutex);
 	struct file* fp = filesys_open(file);
-  if (fp == NULL) {
-      i = -1;
-  }
-	else {
+  if (!fp){
+		ret = -1;
+	}	else {
     for (i = 3; i < 128; i++) {
       if (thread_current()->fd[i] == NULL) {
 				if(strcmp(thread_current()->name, file) == 0)
@@ -254,10 +253,9 @@ int read (int fd, void *buffer, unsigned length){
 	lock_acquire(&mutex);
   if (fd == 0) {
     for (i = 0; i < length; i ++) {
-      if (((char *)buffer)[i] == '\0') {
-        break;
-      }
+      if (((char *)buffer)[i] == '\0') break;
     }
+		ret = i;
   } else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
 		if(!file)	exit(-1);
@@ -284,22 +282,25 @@ int read (int fd, void *buffer, unsigned length){
 int write (int fd, const void *buffer, unsigned length){
 	int ret = -1;
 	if(!is_user_vaddr(buffer)) exit(-1);
+	lock_acquire(mutex);
+	
   if (fd == 1) {
     putbuf(buffer, length);
     ret = length;
   }
+	
 	else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
 		if(!file){
-			lock_acquire(&mutex);
+			lock_release(&mutex);
 			exit(-1);
-		}	
-		if(thread_current()->fd[fd]->deny_write)
-			file_deny_write(thread_current()->fd[fd]);
+		}
+		if(file->deny_write)
+			file_deny_write(file);
 		ret = file_write(file, buffer, length);
   }
 	lock_release(&mutex);
-  return ret; 
+  return ret;
 }
 
 /*
