@@ -5,6 +5,7 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include "threads/synch.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
 #include "filesys/inode.h"
@@ -18,6 +19,10 @@ struct file
     off_t pos;                  /* Current position. */
     bool deny_write;            /* Has file_deny_write() been called? */
   };
+
+struct semaphore readsema;
+struct semaphore wrtsema;
+int readcnt;
 
 /*****
 THINGS TO DO:
@@ -47,6 +52,10 @@ syscall_init (void)
 	arg_size[SYS_SEEK] = 2;
 	arg_size[SYS_TELL] = 1;
 	arg_size[SYS_CLOSE] = 1;
+	
+	sema_init(&readsema, 1);
+	sema_init(&wrtsema, 1);
+	readcnt = 0;
 }
 
 /* check whether given address is user area;
@@ -201,22 +210,20 @@ int max_of_four_int(int a, int b, int c, int d){
 }
 
 bool create (const char *file, unsigned initial_size){
-	if(file == NULL)
-		exit(-1);
+	if(!file)	exit(-1);
   return filesys_create(file, initial_size);
 }
 
 bool remove (const char *file){
-	if(file == NULL)
-		exit(-1);
+	if(!file)	exit(-1);
   return filesys_remove(file);
 }
 
 int open (const char *file){
   int i;
-	if(file == NULL)
-		exit(-1);
-
+	if(!file)	exit(-1);
+	if(!is_user_vaddr(file)) exit(-1);
+	
 	struct file* fp = filesys_open(file);
   if (fp == NULL) {
       return -1; 
@@ -241,16 +248,28 @@ int filesize (int fd){
 
 int read (int fd, void *buffer, unsigned length){
   int i;
+	if(!is_user_vaddr(buffer)) exit(-1);
+	
   if (fd == 0) {
     for (i = 0; i < length; i ++) {
       if (((char *)buffer)[i] == '\0') {
         break;
-      }   
-    }   
+      }
+    }
   } else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
 		if(!file)	exit(-1);
+		sema_down(&readsema);
+		readcnt++;
+		if(readcnt == 1) sema_down(&wrtsema);
+		sema_up(&readsema);
+		
     return file_read(file, buffer, length);
+		
+		sema_down(&readsema);
+		readcnt--;
+		if(readcnt == 0) sema_up(&wrtsema);
+		sema_up(&readsema);
   }
   return i;
 }
@@ -270,15 +289,19 @@ int read (int fd, void *buffer, unsigned length){
 */
 
 int write (int fd, const void *buffer, unsigned length){
+	if(!is_user_vaddr(buffer)) exit(-1);
   if (fd == 1) {
     putbuf(buffer, length);
     return length;
-  } else if (fd > 2) {
+  }
+	else if (fd > 2) {
+		sema_down(&wrtsema);
 		struct file* file = thread_current()->fd[fd];
 		if(!file)	exit(-1);
 		if(thread_current()->fd[fd]->deny_write)
 			file_deny_write(thread_current()->fd[fd]);
-    return file_write(file, buffer, length);
+		return file_write(file, buffer, length);
+		sema_up(&wrtsema);
   }
   return -1; 
 }
