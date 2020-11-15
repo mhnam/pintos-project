@@ -51,7 +51,7 @@ syscall_init (void)
 	arg_size[SYS_TELL] = 1;
 	arg_size[SYS_CLOSE] = 1;
 	
-	sema_init(&mutex, 1);
+	lock_init(&mutex);
 }
 
 /* check whether given address is user area;
@@ -217,25 +217,26 @@ bool remove (const char *file){
 
 int open (const char *file){
   int i;
+	int ret = -1;
 	if(!file)	exit(-1);
 	if(!is_user_vaddr(file)) exit(-1);
 
 	lock_acquire(&mutex);
 	struct file* fp = filesys_open(file);
   if (fp == NULL) {
-      return -1;
+      i = -1;
   } else {
     for (i = 3; i < 128; i++) {
       if (thread_current()->fd[i] == NULL) {
 				if(strcmp(thread_current()->name, file) == 0)
 					file_deny_write(fp);
         thread_current()->fd[i] = fp; 
-        return i;
+        ret = i;
       }
     }
 	}
 	lock_release(&mutex);
-  return -1;
+  return ret;
 }
 
 int filesize (int fd){
@@ -246,6 +247,7 @@ int filesize (int fd){
 
 int read (int fd, void *buffer, unsigned length){
   int i;
+	int ret = -1;
 	if(!is_user_vaddr(buffer)) exit(-1);
 	lock_acquire(&mutex);
   if (fd == 0) {
@@ -257,10 +259,10 @@ int read (int fd, void *buffer, unsigned length){
   } else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
 		if(!file)	exit(-1);
-    return file_read(file, buffer, length);
+    ret = file_read(file, buffer, length);
 		lock_release(&mutex);
   }
-  return i;
+  return ret;
 }
 
 /*
@@ -278,10 +280,11 @@ int read (int fd, void *buffer, unsigned length){
 */
 
 int write (int fd, const void *buffer, unsigned length){
+	int ret = -1;
 	if(!is_user_vaddr(buffer)) exit(-1);
   if (fd == 1) {
     putbuf(buffer, length);
-    return length;
+    ret = length;
   }
 	else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
@@ -291,10 +294,10 @@ int write (int fd, const void *buffer, unsigned length){
 		}	
 		if(thread_current()->fd[fd]->deny_write)
 			file_deny_write(thread_current()->fd[fd]);
-		return file_write(file, buffer, length);
+		ret = file_write(file, buffer, length);
 		lock_release(&mutex);
   }
-  return -1; 
+  return ret; 
 }
 
 /*
