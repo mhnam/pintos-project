@@ -470,8 +470,9 @@ init_thread (struct thread *t, const char *name, int priority)
 	
 	#ifdef USERPROG
 	/*initialise for file name*/
-	for(int i; i<=128; ++i)
+	for(int i=0; i<128; i++){
 		t->fd[i] = NULL;
+	}
 	/*enroll current thread as child of running thread*/
 		list_init(&t->child_list);
 		list_push_back(&running_thread()->child_list, &t->child_elem);

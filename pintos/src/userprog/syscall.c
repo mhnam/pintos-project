@@ -7,8 +7,17 @@
 #include "threads/vaddr.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
+#include "filesys/inode.h"
+#include "filesys/off_t.h"
 
 static int arg_size[SYS_MAX_NUM];
+
+struct file 
+  {
+    struct inode *inode;        /* File's inode. */
+    off_t pos;                  /* Current position. */
+    bool deny_write;            /* Has file_deny_write() been called? */
+  };
 
 /*****
 THINGS TO DO:
@@ -92,7 +101,7 @@ syscall_handler (struct intr_frame *f)
 			break;
 			
 		case SYS_CREATE:
-			f->eax = create((const char*)*(uint32_t *)(f->esp +4), (unsigned)*(uint32_t *)(f->esp + 8));
+			f->eax = create((const char*)*(uint32_t *)(f->esp +16), (unsigned)*(uint32_t *)(f->esp + 20));
 			break;
 			
 		case SYS_REMOVE:
@@ -116,7 +125,7 @@ syscall_handler (struct intr_frame *f)
 			break;
 			
 		case SYS_SEEK:
-      seek((int)*(uint32_t *)(f->esp + 4), (unsigned)*(uint32_t *)(f->esp + 8));
+      seek((int)*(uint32_t *)(f->esp + 16), (unsigned)*(uint32_t *)(f->esp + 20));
 			break;
 			
 		case SYS_TELL:
@@ -145,6 +154,10 @@ void halt(void){
 void exit(int status){
 	printf("%s: exit(%d)\n", thread_name(), status);
 	thread_current()->exit_status = status;
+	for(int i=3; i<128; i++){
+		if(thread_current()->fd[i] != NULL)
+			close(i);
+	}
 	thread_exit();
 }
 
@@ -188,22 +201,29 @@ int max_of_four_int(int a, int b, int c, int d){
 }
 
 bool create (const char *file, unsigned initial_size){
+	if(file == NULL)
+		exit(-1);
   return filesys_create(file, initial_size);
 }
 
 bool remove (const char *file){
+	if(file == NULL)
+		exit(-1);
   return filesys_remove(file);
 }
 
 int open (const char *file){
   int i;
-  struct file* fp = filesys_open(file);
+	if(file == NULL)
+		exit(-1);
+
+	struct file* file = filesys_open(file);
   if (fp == NULL) {
       return -1; 
   } else {
     for (i = 3; i < 128; i++) {
       if (thread_current()->fd[i] == NULL) {
-        thread_current()->fd[i] = fp; 
+        thread_current()->fd[i] = file; 
         return i;
       }   
     }   
@@ -212,19 +232,23 @@ int open (const char *file){
 }
 
 int filesize (int fd){
-  return file_length(thread_current()->fd[fd]);
+		struct file* file = thread_current()->fd[fd];
+		if(!file)	exit(-1);
+  return file_length(file);
 }
 
 int read (int fd, void *buffer, unsigned length){
   int i;
   if (fd == 0) {
-    for (i = 0; i < size; i ++) {
+    for (i = 0; i < length; i ++) {
       if (((char *)buffer)[i] == '\0') {
         break;
       }   
     }   
   } else if (fd > 2) {
-    return file_read(thread_current()->fd[fd], buffer, size);
+		struct file* file = thread_current()->fd[fd];
+		if(!file)	exit(-1);
+    return file_read(file, buffer, length);
   }
   return i;
 }
@@ -245,10 +269,12 @@ int read (int fd, void *buffer, unsigned length){
 
 int write (int fd, const void *buffer, unsigned length){
   if (fd == 1) {
-    putbuf(buffer, size);
+    putbuf(buffer, length);
     return size;
   } else if (fd > 2) {
-    return file_write(thread_current()->fd[fd], buffer, size);
+		struct file* file = thread_current()->fd[fd];
+		if(!file)	exit(-1);
+    return file_write(file, buffer, length);
   }
   return -1; 
 }
@@ -264,13 +290,20 @@ int write (int fd, const void *buffer, unsigned length){
 */
 
 void seek (int fd, unsigned position){
-  file_seek(thread_current()->fd[fd], position);
+	struct file* file = thread_current()->fd[fd];
+	if(!file)	exit(-1);
+  file_seek(file, position);
 }
 
 unsigned tell (int fd){
-  return file_tell(thread_current()->fd[fd]);
+	struct file* file = thread_current()->fd[fd];
+	if(!file)	exit(-1);
+	return file_tell(file);
 }
 
 void close (int fd){
-  return file_close(thread_current()->fd[fd]);
+	struct file* file = thread_current()->fd[fd];
+	if(!file)	exit(-1);
+	file = NULL; /*mark that the file is closed*/
+	return file_close(file);
 }
