@@ -218,6 +218,7 @@ bool remove (const char *file){
 int open (const char *file){
   int i;
 	int ret = -1;
+	
 	if(!file)	exit(-1);
 	if(!is_user_vaddr(file)) exit(-1);
 
@@ -249,18 +250,23 @@ int filesize (int fd){
 int read (int fd, void *buffer, unsigned length){
   int i;
 	int ret = -1;
+	
 	if(!is_user_vaddr(buffer)) exit(-1);
 	lock_acquire(&mutex);
+	
   if (fd == 0) {
     for (i = 0; i < length; i ++) {
       if (((char *)buffer)[i] == '\0') break;
     }
 		ret = i;
-  } else if (fd > 2) {
+  }
+	
+	else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
 		if(!file)	exit(-1);
     ret = file_read(file, buffer, length);
   }
+	
 	lock_release(&mutex);
   return ret;
 }
@@ -281,6 +287,7 @@ int read (int fd, void *buffer, unsigned length){
 
 int write (int fd, const void *buffer, unsigned length){
 	int ret = -1;
+	
 	if(!is_user_vaddr(buffer)) exit(-1);
 	lock_acquire(&mutex);
 	
