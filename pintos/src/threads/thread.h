@@ -104,9 +104,6 @@ struct thread
 	struct list child_list; /*list for managin child*/
 	struct list_elem child_elem; /*actual child list*/
 	int exit_status;
-
-	/*elements for file*/
-	struct file* fd[128];
 #endif
 
     /* Owned by thread.c. */
