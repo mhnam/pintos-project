@@ -35,7 +35,6 @@ static void syscall_handler(struct intr_frame *);
 void
 syscall_init (void) 
 {
-  intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 	arg_size[SYS_EXIT] = 1;
 	arg_size[SYS_EXEC] = 1;
 	arg_size[SYS_WAIT] = 1;
@@ -52,6 +51,7 @@ syscall_init (void)
 	arg_size[SYS_CLOSE] = 1;
 	
 	lock_init(&mutex);
+  intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
 
 /* check whether given address is user area;
@@ -282,7 +282,7 @@ int read (int fd, void *buffer, unsigned length){
 int write (int fd, const void *buffer, unsigned length){
 	int ret = -1;
 	if(!is_user_vaddr(buffer)) exit(-1);
-	lock_acquire(mutex);
+	lock_acquire(&mutex);
 	
   if (fd == 1) {
     putbuf(buffer, length);
@@ -296,9 +296,10 @@ int write (int fd, const void *buffer, unsigned length){
 			exit(-1);
 		}
 		if(file->deny_write)
-			file_deny_write(file);
-		ret = file_write(file, buffer, length);
+			file_deny_write(thread_current()->fd[fd]);
+		ret = file_write(thread_current()->fd[fd], buffer, length);
   }
+	
 	lock_release(&mutex);
   return ret;
 }
