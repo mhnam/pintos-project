@@ -5,7 +5,7 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
-#include "filesys/file.h"
+#include "file/file.h"
 
 static int arg_size[SYS_MAX_NUM];
 
