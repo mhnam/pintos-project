@@ -225,13 +225,15 @@ int open (const char *file){
 	struct file* fp = filesys_open(file);
   if (fp == NULL) {
       i = -1;
-  } else {
+  }
+	else {
     for (i = 3; i < 128; i++) {
       if (thread_current()->fd[i] == NULL) {
 				if(strcmp(thread_current()->name, file) == 0)
 					file_deny_write(fp);
         thread_current()->fd[i] = fp; 
         ret = i;
+				break;
       }
     }
 	}
@@ -260,8 +262,8 @@ int read (int fd, void *buffer, unsigned length){
 		struct file* file = thread_current()->fd[fd];
 		if(!file)	exit(-1);
     ret = file_read(file, buffer, length);
-		lock_release(&mutex);
   }
+	lock_release(&mutex);
   return ret;
 }
 
@@ -295,8 +297,8 @@ int write (int fd, const void *buffer, unsigned length){
 		if(thread_current()->fd[fd]->deny_write)
 			file_deny_write(thread_current()->fd[fd]);
 		ret = file_write(file, buffer, length);
-		lock_release(&mutex);
   }
+	lock_release(&mutex);
   return ret; 
 }
 
