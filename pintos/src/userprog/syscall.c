@@ -217,17 +217,17 @@ int open (const char *file){
 	if(file == NULL)
 		exit(-1);
 
-	struct file* file = filesys_open(file);
+	struct file* fp = filesys_open(file);
   if (fp == NULL) {
       return -1; 
   } else {
     for (i = 3; i < 128; i++) {
       if (thread_current()->fd[i] == NULL) {
-        thread_current()->fd[i] = file; 
+        thread_current()->fd[i] = fp; 
         return i;
-      }   
-    }   
-  }
+      }
+    }
+	}
   return -1;
 }
 
@@ -270,7 +270,7 @@ int read (int fd, void *buffer, unsigned length){
 int write (int fd, const void *buffer, unsigned length){
   if (fd == 1) {
     putbuf(buffer, length);
-    return size;
+    return length;
   } else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
 		if(!file)	exit(-1);
