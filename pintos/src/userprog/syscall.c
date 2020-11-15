@@ -20,7 +20,7 @@ struct file
     bool deny_write;            /* Has file_deny_write() been called? */
   };
 
-struct semaphore mutex;
+struct lock mutex;
 
 /*****
 THINGS TO DO:
@@ -220,7 +220,7 @@ int open (const char *file){
 	if(!file)	exit(-1);
 	if(!is_user_vaddr(file)) exit(-1);
 
-	sema_down(&mutex);
+	lock_acquire(&mutex);
 	struct file* fp = filesys_open(file);
   if (fp == NULL) {
       return -1;
@@ -234,7 +234,7 @@ int open (const char *file){
       }
     }
 	}
-	sema_up(&mutex);
+	lock_release(&mutex);
   return -1;
 }
 
@@ -247,7 +247,7 @@ int filesize (int fd){
 int read (int fd, void *buffer, unsigned length){
   int i;
 	if(!is_user_vaddr(buffer)) exit(-1);
-	sema_down(&mutex);
+	lock_acquire(&mutex);
   if (fd == 0) {
     for (i = 0; i < length; i ++) {
       if (((char *)buffer)[i] == '\0') {
@@ -258,7 +258,7 @@ int read (int fd, void *buffer, unsigned length){
 		struct file* file = thread_current()->fd[fd];
 		if(!file)	exit(-1);
     return file_read(file, buffer, length);
-		sema_up(&mutex);
+		lock_release(&mutex);
   }
   return i;
 }
@@ -286,13 +286,13 @@ int write (int fd, const void *buffer, unsigned length){
 	else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
 		if(!file){
-			sema_down(&mutex);
+			lock_acquire(&mutex);
 			exit(-1);
 		}	
 		if(thread_current()->fd[fd]->deny_write)
 			file_deny_write(thread_current()->fd[fd]);
 		return file_write(file, buffer, length);
-		sema_up(&mutex);
+		lock_release(&mutex);
   }
   return -1; 
 }
