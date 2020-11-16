@@ -20,7 +20,8 @@ struct file
     bool deny_write;            /* Has file_deny_write() been called? */
   };
 
-struct lock mutex;
+struct semaphore mutex, wrt;
+int readcnt;
 
 /*****
 THINGS TO DO:
@@ -50,8 +51,10 @@ syscall_init (void)
 	arg_size[SYS_TELL] = 1;
 	arg_size[SYS_CLOSE] = 1;
 	
-	lock_init(&mutex);
-  intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
+	sema_init(&mutex, 1);
+	sema_init(&wrt, 1);
+	readcnt = 0;
+	intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
 
 /* check whether given address is user area;
@@ -222,7 +225,6 @@ int open (const char *file){
 	if(!file)	exit(-1);
 	if(!is_user_vaddr(file)) exit(-1);
 
-	lock_acquire(&mutex);
 	struct file* fp = filesys_open(file);
   if (!fp){
 		ret = -1;
@@ -237,7 +239,6 @@ int open (const char *file){
       }
     }
 	}
-	lock_release(&mutex);
   return ret;
 }
 
@@ -251,8 +252,12 @@ int read (int fd, void *buffer, unsigned length){
   int i;
 	int ret = -1;
 	
+	sema_down(&mutex);
+	readcnt++;
+	if(readcnt==1) sema_down(&wrt);
+	sema_up(&mutex);
+	
 	if(!is_user_vaddr(buffer)) exit(-1);
-	lock_acquire(&mutex);
 	
   if (fd == 0) {
     for (i = 0; i < length; i ++) {
@@ -267,7 +272,11 @@ int read (int fd, void *buffer, unsigned length){
     ret = file_read(file, buffer, length);
   }
 	
-	lock_release(&mutex);
+	sema_down(&mutex);
+	readcnt--;
+	if(readcnt==0) sema_up(wrt);
+	sema_up(&mutex);
+	
   return ret;
 }
 
@@ -288,8 +297,8 @@ int read (int fd, void *buffer, unsigned length){
 int write (int fd, const void *buffer, unsigned length){
 	int ret = -1;
 	
+	sema_down(&wrt);
 	if(!is_user_vaddr(buffer)) exit(-1);
-	lock_acquire(&mutex);
 	
   if (fd == 1) {
     putbuf(buffer, length);
@@ -298,17 +307,14 @@ int write (int fd, const void *buffer, unsigned length){
 	
 	else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
-		if(!file){
-			lock_release(&mutex);
-			exit(-1);
-		}
+		if(!file) exit(-1);
 		if(file->deny_write)
 			file_deny_write(thread_current()->fd[fd]);
 		ret = file_write(thread_current()->fd[fd], buffer, length);
   }
 	
-	lock_release(&mutex);
-  return ret;
+	sema_up(&wrt);
+	return ret;
 }
 
 /*
