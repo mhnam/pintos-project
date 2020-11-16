@@ -57,12 +57,13 @@ process_execute (const char *file_name)
     palloc_free_page (fn_copy); 
   else{
 		struct thread *cur = thread_current ();
-		struct list_elem* e = list_begin(cur->child);
+		struct list_elem* e = list_begin(&cur->child_list);
 		struct thread* child;
-		for(e; e != list_end(cur->child_list); e = list_next(e)){
+		for(e; e != list_end(&cur->child_list); e = list_next(e)){
 			child = list_entry(e, struct thread, child_elem);
 				if(child->exit_status == -1) return process_wait(tid);
 		}
+	}
 	return tid;
 }
 

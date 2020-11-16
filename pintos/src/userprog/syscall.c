@@ -220,26 +220,22 @@ bool remove (const char *file){
 
 int open (const char *file){
   int i;
-	int ret = -1;
 	
 	if(!file)	exit(-1);
 	if(!is_user_vaddr(file)) exit(-1);
 
 	struct file* fp = filesys_open(file);
-  if (!fp){
-		ret = -1;
-	}	else {
-    for (i = 3; i < 128; i++) {
-      if (thread_current()->fd[i] == NULL) {
-				if(strcmp(thread_current()->name, file) == 0)
-					file_deny_write(fp);
-        thread_current()->fd[i] = fp; 
-        ret = i;
-				break;
-      }
-    }
+  if (!fp) return -1;
+	
+	if(strcmp(thread_current()->name, file) == 0) file_deny_write(fp);
+
+	for (i = 3; i < 128; i++) {
+		if (thread_current()->fd[i] == NULL) {
+			thread_current()->fd[i] = fp; 
+			return i;
+		}
 	}
-  return ret;
+  return -1;
 }
 
 int filesize (int fd){
@@ -250,55 +246,45 @@ int filesize (int fd){
 
 int read (int fd, void *buffer, unsigned length){
   int i;
-	int ret = -1;
-	
+	int ret;
+	if(!is_user_vaddr(buffer)) exit(-1);
+
 	sema_down(&mutex);
 	readcnt++;
-	if(readcnt==1) sema_down(&wrt);
+	if(readcnt == 1) sema_down(&wrt);
 	sema_up(&mutex);
-	
-	if(!is_user_vaddr(buffer)) exit(-1);
 	
   if (fd == 0) {
     for (i = 0; i < length; i ++) {
       if (((char *)buffer)[i] == '\0') break;
     }
-		ret = i;
   }
 	
 	else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
-		if(!file)	exit(-1);
+		if(!file){
+			sema_down(&mutex);
+			readcnt--;
+			if(readcnt == 0) sema_up(&wrt);
+			sema_up(&mutex);
+			exit(-1);
+		}
     ret = file_read(file, buffer, length);
   }
 	
 	sema_down(&mutex);
 	readcnt--;
-	if(readcnt==0) sema_up(wrt);
+	if(readcnt==0) sema_up(&wrt);
 	sema_up(&mutex);
 	
   return ret;
 }
 
-/*
-int read (int fd, void *buffer, unsigned length){
-	int i;
-	
-		if(fd == 0 && buffer != NULL){
-			for(i = 0; i <= (int)length; i++)
-				*(char*)(buffer + i) = input_getc();
-		return i;
-		}	
-	
-		else return -1;
-}
-*/
-
 int write (int fd, const void *buffer, unsigned length){
 	int ret = -1;
-	
-	sema_down(&wrt);
 	if(!is_user_vaddr(buffer)) exit(-1);
+
+	sema_down(&wrt);
 	
   if (fd == 1) {
     putbuf(buffer, length);
@@ -306,26 +292,18 @@ int write (int fd, const void *buffer, unsigned length){
   }
 	
 	else if (fd > 2) {
-		struct file* file = thread_current()->fd[fd];
-		if(!file) exit(-1);
+		if(!thread_current()->fd[fd]){
+			sema_up(&wrt); exit(-1);
+		}
 		if(file->deny_write)
 			file_deny_write(thread_current()->fd[fd]);
 		ret = file_write(thread_current()->fd[fd], buffer, length);
   }
 	
 	sema_up(&wrt);
+	
 	return ret;
 }
-
-/*
-int write (int fd, const void *buffer, unsigned length){
-	if(fd == 1){
-		putbuf(buffer, length);
-		return length;
-	}
-	return -1;
-}
-*/
 
 void seek (int fd, unsigned position){
 	struct file* file = thread_current()->fd[fd];
@@ -342,6 +320,6 @@ unsigned tell (int fd){
 void close (int fd){
 	struct file* file = thread_current()->fd[fd];
 	if(!file)	exit(-1);
-	file = NULL; /*mark that the file is closed*/
+	thread_current()->fd[fd] = NULL; /*mark that the file is closed*/
 	return file_close(file);
 }
