@@ -474,6 +474,7 @@ init_thread (struct thread *t, const char *name, int priority)
 		t->fd[i] = NULL;
 	}
 	/*enroll current thread as child of running thread*/
+		t->parent = running_thread();
 		list_init(&t->child_list);
 		list_push_back(&running_thread()->child_list, &t->child_elem);
 	/*initialise semaphore variables*/

@@ -55,21 +55,15 @@ process_execute (const char *file_name)
 	sema_down(&thread_current()->load_child);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
-/*
-  else
-    {
-      struct thread *cur = thread_current ();
-      struct list_elem *e = list_pop_back (&cur->child_list);
-      struct thread *child = list_entry (e, struct thread, child_elem);
-
-      sema_down (&child->wait_sema);
-      if (!child->load_success)
-        tid = TID_ERROR;
-      else
-        list_push_back (&cur->child_list, e);
-    }
-*/	
-  return tid;
+  else{
+		struct thread *cur = thread_current ();
+		struct list_elem* e = list_begin(cur->child);
+		struct thread* child;
+		for(e; e != list_end(cur->child_list); e = list_next(e)){
+			child = list_entry(e, struct thread, child_elem);
+				if(child->exit_status == -1) return process_wait(tid);
+		}
+	return tid;
 }
 
 /* A thread function that loads a user process and starts it
