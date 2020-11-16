@@ -475,7 +475,7 @@ init_thread (struct thread *t, const char *name, int priority)
 	}
 	
 	/*exit status flag*/
-	fl = 0;
+	t->fl = 0;
 	
 	/*enroll current thread as child of running thread*/
 		t->parent = running_thread();

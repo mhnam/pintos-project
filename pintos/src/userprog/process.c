@@ -84,7 +84,7 @@ start_process (void *file_name_)
 //	printf(">>	[DEBUG] Starting Loading...\n");
   success = load (file_name, &if_.eip, &if_.esp);
 	if(!success)
-		&thread_current()->fl = 1;
+		thread_current()->fl = 1;
 //	printf(">>	[DEBUG] Load Completed\n");
 
   /* If load failed, quit. */
