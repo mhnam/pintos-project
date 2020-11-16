@@ -101,6 +101,7 @@ struct thread
 	/*elements for process wait, and exit*/
 	struct semaphore wait_child; /*held by child while thread is alive*/
 	struct semaphore exit_child; /*held by parent while parent is not waiting child*/
+	struct semaphore load_child;
 	struct list child_list; /*list for managin child*/
 	struct list_elem child_elem; /*actual child list*/
 	int exit_status;

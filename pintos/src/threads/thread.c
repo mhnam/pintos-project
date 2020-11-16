@@ -479,6 +479,7 @@ init_thread (struct thread *t, const char *name, int priority)
 	/*initialise semaphore variables*/
 		sema_init(&t->wait_child, 0);
 		sema_init(&t->exit_child, 0);
+		sema_init(&t->load_child, 0);
 	#endif
 }
 
