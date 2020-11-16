@@ -473,6 +473,10 @@ init_thread (struct thread *t, const char *name, int priority)
 	for(int i=0; i<128; i++){
 		t->fd[i] = NULL;
 	}
+	
+	/*exit status flag*/
+	fl = 0;
+	
 	/*enroll current thread as child of running thread*/
 		t->parent = running_thread();
 		list_init(&t->child_list);

@@ -295,7 +295,7 @@ int write (int fd, const void *buffer, unsigned length){
 		if(!thread_current()->fd[fd]){
 			sema_up(&wrt); exit(-1);
 		}
-		if(file->deny_write)
+		if(thread_current()->fd[fd]->deny_write)
 			file_deny_write(thread_current()->fd[fd]);
 		ret = file_write(thread_current()->fd[fd], buffer, length);
   }
