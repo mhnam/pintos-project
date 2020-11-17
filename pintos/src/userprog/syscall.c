@@ -236,8 +236,7 @@ int open (const char *file){
 				thread_current()->fd[i] = fp; 
 				return i;
 			}
-			i++;
-		}while(i < 128);
+		}
 	}
 }
 
@@ -248,7 +247,7 @@ int filesize (int fd){
 }
 
 int read (int fd, void *buffer, unsigned length){
-  int i;
+  int i, ret;
 
 	if(!is_user_vaddr(buffer)) exit(-1);
 	if(!buffer || fd == 1)	exit(-1);
@@ -267,12 +266,15 @@ int read (int fd, void *buffer, unsigned length){
 			lock_release(&filesys_lock);
 			exit(-1);
 		}
+		ret = file_read(file, buffer, length);
 		lock_release(&filesys_lock);
-		return file_read(file, buffer, length);
+		return ret;
   }
 }
 
 int write (int fd, const void *buffer, unsigned length){
+	int ret;
+
 	if(!is_user_vaddr(buffer)) exit(-1);
 	if(!buffer || fd == 2)	exit(-1);
 
@@ -289,8 +291,9 @@ int write (int fd, const void *buffer, unsigned length){
 		}
 		if(thread_current()->fd[fd]->deny_write)
 			file_deny_write(thread_current()->fd[fd]);
+		ret = file_write(thread_current()->fd[fd], buffer, length);
 		lock_release(&filesys_lock);
-		return file_write(thread_current()->fd[fd], buffer, length);
+		return ret;
   }
 }
 
