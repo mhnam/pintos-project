@@ -247,7 +247,8 @@ int filesize (int fd){
 }
 
 int read (int fd, void *buffer, unsigned length){
-  int i, ret;
+  int i;
+	int ret = -1
 
 	if(!is_user_vaddr(buffer)) exit(-1);
 	if(!buffer || fd == 1)	exit(-1);
@@ -274,17 +275,17 @@ int read (int fd, void *buffer, unsigned length){
 }
 
 int write (int fd, const void *buffer, unsigned length){
-	int ret;
+	int ret = -1;
 
 	if(!is_user_vaddr(buffer)) exit(-1);
 	if(!buffer || fd == 2)	exit(-1);
-
 	lock_acquire(&filesys_lock);
-	
+
 	if (fd == 1) {
     putbuf(buffer, length);
+		ret = length
 		lock_release(&filesys_lock);
-		return length;
+		return ret;
   }
 	else if (fd > 2) {
 		if(thread_current()->fd[fd] == NULL){
