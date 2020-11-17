@@ -52,19 +52,22 @@ process_execute (const char *file_name)
 
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (thrd_name, PRI_DEFAULT, start_process, fn_copy);
-	sema_down(&thread_current()->load_child);
+  palloc_free_page (fn_copy2); 
   if (tid == TID_ERROR){
     palloc_free_page (fn_copy); 
-    palloc_free_page (fn_copy2); 
 	}
   else{
 		struct thread *cur = thread_current ();
-		struct list_elem* e = list_begin(&cur->child_list);
-		struct thread* child;
-		for(e; e != list_end(&cur->child_list); e = list_next(e)){
+		struct list_elem* e = list_pop_back(&cur->child_list);
+		struct thread* child = list_entry(e, struct thread, child_elem);
+		
+		sema_down(&child->load_child);
+		if(!child->fl) tid = TID_ERROR;
+		else	list_push_back(&cur->child_list, e);
+/*		for(e; e != list_end(&cur->child_list); e = list_next(e)){
 			child = list_entry(e, struct thread, child_elem);
 				if(child->exit_status == -1) return process_wait(tid);
-		}
+		}*/
 	}
 	return tid;
 }
@@ -85,8 +88,8 @@ start_process (void *file_name_)
   if_.eflags = FLAG_IF | FLAG_MBS;
 //	printf(">>	[DEBUG] Starting Loading...\n");
   success = load (file_name, &if_.eip, &if_.esp);
-	if(!success)
-		thread_current()->fl = 1;
+	thread_current()->fl = success;
+	sema_up(&thread_current()->load_child);
 //	printf(">>	[DEBUG] Load Completed\n");
 
   /* If load failed, quit. */
@@ -94,7 +97,6 @@ start_process (void *file_name_)
 	if(!success)
     thread_exit ();
 	
-	sema_up(&thread_current()->parent->load_child);
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
      threads/intr-stubs.S).  Because intr_exit takes all of its
