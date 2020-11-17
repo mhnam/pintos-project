@@ -274,6 +274,7 @@ int read (int fd, void *buffer, unsigned length){
 
 int write (int fd, const void *buffer, unsigned length){
 	int ret = -1;
+	struct file* file = thread_current()->fd[fd];
 
 	if(!is_user_vaddr(buffer)) exit(-1);
 	if(!buffer || fd == 2)	exit(-1);
@@ -284,13 +285,13 @@ int write (int fd, const void *buffer, unsigned length){
 		ret = length;
   }
 	else if (fd > 2) {
-		if(thread_current()->fd[fd] == NULL){
+		if(!file){
 			lock_release(&filesys_lock);
 			exit(-1);
 		}
-		if(thread_current()->fd[fd]->deny_write)
-			file_deny_write(thread_current()->fd[fd]);
-		ret = file_write(thread_current()->fd[fd], buffer, length);
+		if(file->deny_write)
+			file_deny_write(file);
+		ret = file_write(file, buffer, length);
   }
 	lock_release(&filesys_lock);
 	return ret;

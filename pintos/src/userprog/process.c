@@ -61,13 +61,9 @@ process_execute (const char *file_name)
 		struct list_elem* e = list_pop_back(&cur->child_list);
 		struct thread* child = list_entry(e, struct thread, child_elem);
 		
-		sema_down(&child->load_child);
+		sema_down(&child->wait_child);
 		if(!child->fl) tid = TID_ERROR;
 		else	list_push_back(&cur->child_list, e);
-/*		for(e; e != list_end(&cur->child_list); e = list_next(e)){
-			child = list_entry(e, struct thread, child_elem);
-				if(child->exit_status == -1) return process_wait(tid);
-		}*/
 	}
 	return tid;
 }
@@ -89,7 +85,7 @@ start_process (void *file_name_)
 //	printf(">>	[DEBUG] Starting Loading...\n");
   success = load (file_name, &if_.eip, &if_.esp);
 	thread_current()->fl = success;
-	sema_up(&thread_current()->load_child);
+	sema_up(&thread_current()->wait_child);
 //	printf(">>	[DEBUG] Load Completed\n");
 
   /* If load failed, quit. */
