@@ -248,26 +248,21 @@ int filesize (int fd){
 
 int read (int fd, void *buffer, unsigned length){
   int i;
-	int ret = -1
+	int ret = -1;
 
 	if(!is_user_vaddr(buffer)) exit(-1);
 	if(!buffer || fd == 1)	exit(-1);
 	
-	lock_acquire(&filesys_lock);
   if (fd == 0) {
     for (i = 0; i < length; i++) {
       if (input_getc() == '\0') break;
     }
-		ret = i;
-		lock_release(&filesys_lock);
-		return ret;
+		return i;
   }
 	else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
-		if(!file){
-			lock_release(&filesys_lock);
-			exit(-1);
-		}
+		if(!file)	exit(-1);
+		lock_acquire(&filesys_lock);
 		ret = file_read(file, buffer, length);
 		lock_release(&filesys_lock);
 		return ret;
@@ -279,25 +274,23 @@ int write (int fd, const void *buffer, unsigned length){
 
 	if(!is_user_vaddr(buffer)) exit(-1);
 	if(!buffer || fd == 2)	exit(-1);
-	lock_acquire(&filesys_lock);
 
 	if (fd == 1) {
     putbuf(buffer, length);
-		ret = length
-		lock_release(&filesys_lock);
-		return ret;
+		return length;
   }
 	else if (fd > 2) {
 		if(thread_current()->fd[fd] == NULL){
-			lock_release(&filesys_lock);
 			exit(-1);
 		}
 		if(thread_current()->fd[fd]->deny_write)
 			file_deny_write(thread_current()->fd[fd]);
+		lock_acquire(&filesys_lock);
 		ret = file_write(thread_current()->fd[fd], buffer, length);
 		lock_release(&filesys_lock);
 		return ret;
   }
+	return -1;
 }
 
 void seek (int fd, unsigned position){
