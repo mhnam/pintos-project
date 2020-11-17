@@ -20,7 +20,6 @@ struct file
     bool deny_write;            /* Has file_deny_write() been called? */
   };
 
-//struct semaphore mutex, wrt;
 struct lock filesys_lock;
 int readcnt;
 
@@ -52,9 +51,6 @@ syscall_init (void)
 	arg_size[SYS_TELL] = 1;
 	arg_size[SYS_CLOSE] = 1;
 	
-//	sema_init(&mutex, 1);
-//	sema_init(&wrt, 1);
-//	readcnt = 0;
 	lock_init(&filesys_lock);
 	intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
@@ -229,8 +225,10 @@ int open (const char *file){
 	
 	lock_acquire(&filesys_lock);
 	struct file* fp = filesys_open(file);
-  if (!fp) ret = -1;
-	else{
+	lock_release(&filesys_lock);
+
+	if (!fp) ret = -1;
+	else{ /*put new file into threads' fd and return such fd*/
 		for (i = 3; i < 128; i++) {
 			if (thread_current()->fd[i] == NULL) {
 				if(strcmp(thread_current()->name, file) == 0) file_deny_write(fp);
@@ -240,7 +238,6 @@ int open (const char *file){
 			}
 		}
 	}
-	lock_release(&filesys_lock);
   return ret;
 }
 
@@ -253,13 +250,8 @@ int filesize (int fd){
 int read (int fd, void *buffer, unsigned length){
   int i;
 	int ret;
+
 	if(!is_user_vaddr(buffer)) exit(-1);
-/*
-	sema_down(&mutex);
-	readcnt++;
-	if(readcnt == 1) sema_down(&wrt);
-	sema_up(&mutex);
-*/
 	lock_acquire(&filesys_lock);
   if (fd == 0) {
     for (i = 0; i < length; i ++) {
@@ -271,21 +263,11 @@ int read (int fd, void *buffer, unsigned length){
 	else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
 		if(!file){
-//			sema_down(&mutex);
-//			readcnt--;
-//			if(readcnt == 0) sema_up(&wrt);
-//			sema_up(&mutex);
 			lock_release(&filesys_lock);
 			exit(-1);
 		}
     ret = file_read(file, buffer, length);
   }
-/*	
-	sema_down(&mutex);
-	readcnt--;
-	if(readcnt==0) sema_up(&wrt);
-	sema_up(&mutex);
-*/
 	lock_release(&filesys_lock);
   return ret;
 }
@@ -294,7 +276,6 @@ int write (int fd, const void *buffer, unsigned length){
 	int ret = -1;
 	if(!is_user_vaddr(buffer)) exit(-1);
 
-//	sema_down(&wrt);
 	lock_acquire(&filesys_lock);
 
 	if (fd == 1) {
@@ -304,7 +285,6 @@ int write (int fd, const void *buffer, unsigned length){
 	
 	else if (fd > 2) {
 		if(thread_current()->fd[fd] == NULL){
-//			sema_up(&wrt);
 			lock_release(&filesys_lock);
 			exit(-1);
 		}
@@ -313,7 +293,6 @@ int write (int fd, const void *buffer, unsigned length){
 		ret = file_write(thread_current()->fd[fd], buffer, length);
   }
 	
-//	sema_up(&wrt);
 	lock_release(&filesys_lock);
 	return ret;
 }
