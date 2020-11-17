@@ -160,10 +160,12 @@ void halt(void){
 void exit(int status){
 	printf("%s: exit(%d)\n", thread_name(), status);
 	thread_current()->exit_status = status;
-	for(int i=3; i<128; i++){
+	int i = 3;
+	do{
 		if(thread_current()->fd[i] != NULL)
 			close(i);
-	}
+		i++;
+	}while(i<128);
 	thread_exit();
 }
 
