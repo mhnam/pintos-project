@@ -164,8 +164,8 @@ void exit(int status){
 	do{
 		if(thread_current()->fd[i] != NULL)
 			close(i);
-		i++;
-	}while(i<128);
+		++i;
+	}while(i<=128);
 	thread_exit();
 }
 
@@ -219,7 +219,7 @@ bool remove (const char *file){
 }
 
 int open (const char *file){
-  int i;
+  int i=3;
 	int ret;
 	
 	if(!file)	exit(-1);
@@ -231,14 +231,15 @@ int open (const char *file){
 
 	if (!fp) ret = -1;
 	else{ /*put new file into threads' fd and return such fd*/
-		for (i = 3; i < 128; i++) {
+		do{
 			if (thread_current()->fd[i] == NULL) {
 				if(strcmp(thread_current()->name, file) == 0) file_deny_write(fp);
 				thread_current()->fd[i] = fp; 
 				ret = i;
+				i++;
 				break;
 			}
-		}
+		}while(i<128);
 	}
   return ret;
 }
