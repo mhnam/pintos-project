@@ -250,6 +250,57 @@ int read (int fd, void *buffer, unsigned length){
   int i, ret;
 
 	if(!is_user_vaddr(buffer)) exit(-1);
+	lock_acquire(&filesys_lock);
+  if (fd == 0) {
+    for (i = 0; i < length; i ++) {
+      if (((char *)buffer)[i] == '\0') break;
+    }
+		ret = i;
+		lock_release(&filesys_lock);
+  	return ret;
+  }
+	else if (fd > 2) {
+		struct file* file = thread_current()->fd[fd];
+		if(!file){
+			lock_release(&filesys_lock);
+			exit(-1);
+		}
+    ret = file_read(file, buffer, length);
+		lock_release(&filesys_lock);
+		return ret;
+	}
+}
+
+int write (int fd, const void *buffer, unsigned length){
+	int ret = -1;
+	if(!is_user_vaddr(buffer)) exit(-1);
+
+	lock_acquire(&filesys_lock);
+
+	if (fd == 1) {
+    putbuf(buffer, length);
+    ret = length;
+  }
+	
+	else if (fd > 2) {
+		if(thread_current()->fd[fd] == NULL){
+			lock_release(&filesys_lock);
+			exit(-1);
+		}
+		if(thread_current()->fd[fd]->deny_write)
+			file_deny_write(thread_current()->fd[fd]);
+		ret = file_write(thread_current()->fd[fd], buffer, length);
+  }
+	
+	lock_release(&filesys_lock);
+	return ret;
+}
+
+/*
+int read (int fd, void *buffer, unsigned length){
+  int i, ret;
+
+	if(!is_user_vaddr(buffer)) exit(-1);
 	if(!buffer || fd == 1)	exit(-1);
 	
 	lock_acquire(&filesys_lock);
@@ -295,6 +346,10 @@ int write (int fd, const void *buffer, unsigned length){
 		return ret;
   }
 }
+*/
+
+pintos -v -k -T 300 --qemu  --filesys-size=2 -p tests/filesys/base/syn-read -a syn-read -p tests/filesys/base/child-syn-read -a child-syn-read -- -q  -f run syn-read < /dev/null 2> tests/filesys/base/syn-read.errors > tests/filesys/base/syn-read.output
+perl -I../.. ../../tests/filesys/base/syn-read.ck tests/filesys/base/syn-read tests/filesys/base/syn-read.result
 
 void seek (int fd, unsigned position){
 	struct file* file = thread_current()->fd[fd];
