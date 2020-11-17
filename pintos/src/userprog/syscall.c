@@ -164,8 +164,8 @@ void exit(int status){
 	do{
 		if(thread_current()->fd[i] != NULL)
 			close(i);
-		++i;
-	}while(i<=128);
+		i++;
+	}while(i<128);
 	thread_exit();
 }
 
@@ -219,29 +219,26 @@ bool remove (const char *file){
 }
 
 int open (const char *file){
-  int i=3;
-	int ret;
+  int i;
 	
-	if(!file)	exit(-1);
 	if(!is_user_vaddr(file)) exit(-1);
+	if(!file)	exit(-1);
 	
 	lock_acquire(&filesys_lock);
 	struct file* fp = filesys_open(file);
 	lock_release(&filesys_lock);
 
-	if (!fp) ret = -1;
+	if (!fp) return -1;
 	else{ /*put new file into threads' fd and return such fd*/
 		do{
-			if (thread_current()->fd[i] == NULL) {
+			if(thread_current()->fd[i] == NULL) {
 				if(strcmp(thread_current()->name, file) == 0) file_deny_write(fp);
 				thread_current()->fd[i] = fp; 
-				ret = i;
-				i++;
-				break;
+				return i;
 			}
-		}while(i<128);
+			i++;
+		}while(i < 128);
 	}
-  return ret;
 }
 
 int filesize (int fd){
@@ -252,38 +249,39 @@ int filesize (int fd){
 
 int read (int fd, void *buffer, unsigned length){
   int i;
-	int ret;
 
 	if(!is_user_vaddr(buffer)) exit(-1);
+	if(!buffer || fd == 1)	exit(-1);
+	
 	lock_acquire(&filesys_lock);
   if (fd == 0) {
-    for (i = 0; i < length; i ++) {
-      if (((char *)buffer)[i] == '\0') break;
+    for (i = 0; i < length; i++) {
+      if (input_getc() == /*((char *)buffer)[i]*/ == '\0') break;
     }
-		ret = i;
+		lock_release(&filesys_lock);
+		return i;
   }
-	
 	else if (fd > 2) {
 		struct file* file = thread_current()->fd[fd];
 		if(!file){
 			lock_release(&filesys_lock);
 			exit(-1);
 		}
-    ret = file_read(file, buffer, length);
+		lock_release(&filesys_lock);
+		return file_read(file, buffer, length);
   }
-	lock_release(&filesys_lock);
-  return ret;
 }
 
 int write (int fd, const void *buffer, unsigned length){
-	int ret = -1;
 	if(!is_user_vaddr(buffer)) exit(-1);
+	if(!buffer || fd == 2)	exit(-1);
 
 	lock_acquire(&filesys_lock);
 
 	if (fd == 1) {
     putbuf(buffer, length);
-    ret = length;
+		lock_release(&filesys_lock);
+    return length;
   }
 	
 	else if (fd > 2) {
@@ -293,11 +291,9 @@ int write (int fd, const void *buffer, unsigned length){
 		}
 		if(thread_current()->fd[fd]->deny_write)
 			file_deny_write(thread_current()->fd[fd]);
-		ret = file_write(thread_current()->fd[fd], buffer, length);
+		lock_release(&filesys_lock);
+		return file_write(thread_current()->fd[fd], buffer, length);
   }
-	
-	lock_release(&filesys_lock);
-	return ret;
 }
 
 void seek (int fd, unsigned position){
