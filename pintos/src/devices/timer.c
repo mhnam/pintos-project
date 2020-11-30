@@ -7,7 +7,11 @@
 #include "threads/interrupt.h"
 #include "threads/synch.h"
 #include "threads/thread.h"
-  
+
+/* List of processes in THREAD_BLOCKED state, that is, processes
+   that are blocked to run and not actually running. */
+static struct list sleeped_list;
+
 /* See [8254] for hardware details of the 8254 timer chip. */
 
 #if TIMER_FREQ < 19
@@ -37,6 +41,7 @@ timer_init (void)
 {
   pit_configure_channel (0, 2, TIMER_FREQ);
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+	list_init(&sleeped_list);
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -94,10 +99,17 @@ timer_sleep (int64_t ticks)
 
   ASSERT (intr_get_level () == INTR_ON);
 	
+	old_level = intr_disable();
+	
 	t->sleep_time = ticks;
 	t->start_sleep_time = start;
-  t->status = THREAD_BLOCKED;
-  list_push_back (&sleeped_list, &t->elem);
+  
+	list_push_back (&sleeped_list, &t->elem);
+  
+	t->status = THREAD_BLOCKED;
+  schedule ();
+	
+	intr_set_level(old_level);
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -177,7 +189,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
 	struct list_elem *e;
   ticks++;
 	for(e = list_begin(&sleeped_list); e != list_end(&sleeped_list); e = list_next(e)){
-		if(timer_elapsed(e->start_sleep_time) < e->sleep_time)
+		if(timer_elapsed(e->start_sleep_time) <= e->sleep_time)
 			thread_yield();
 		break;
 	}

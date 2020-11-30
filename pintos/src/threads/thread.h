@@ -89,7 +89,7 @@ struct thread
     char name[16];                      /* Name (for debugging purposes). */
     uint8_t *stack;                     /* Saved stack pointer. */
     int priority;                       /* Priority. */
-		int sleep_time;											/* Sleep Time */
+		int64_t sleep_time;                 /* Sleep Time */
 		int64_t start_sleep_time;
     struct list_elem allelem;           /* List element for all threads list. */
 
