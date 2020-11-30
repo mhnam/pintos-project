@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <round.h>
 #include <stdio.h>
+#include <list.h>
 #include "devices/pit.h"
 #include "threads/interrupt.h"
 #include "threads/synch.h"
@@ -41,7 +42,6 @@ timer_init (void)
 {
   pit_configure_channel (0, 2, TIMER_FREQ);
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
-	list_init(&sleeped_list);
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -96,7 +96,8 @@ timer_sleep (int64_t ticks)
 {
   int64_t start = timer_ticks ();
   struct thread *t = thread_current ();
-
+	enum intr_level old_level;
+	
   ASSERT (intr_get_level () == INTR_ON);
 	
 	old_level = intr_disable();
@@ -104,11 +105,9 @@ timer_sleep (int64_t ticks)
 	t->sleep_time = ticks;
 	t->start_sleep_time = start;
   
-	list_push_back (&sleeped_list, &t->elem);
+	list_push_back (&sleeped_list, &thread_current->elem);
   
-	t->status = THREAD_BLOCKED;
-  schedule ();
-	
+	thread_block();	
 	intr_set_level(old_level);
 }
 
@@ -187,11 +186,14 @@ static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
 	struct list_elem *e;
+	sturct thread* t;
   ticks++;
-	for(e = list_begin(&sleeped_list); e != list_end(&sleeped_list); e = list_next(e)){
-		if(timer_elapsed(e->start_sleep_time) <= e->sleep_time)
+	
+	for(e = list_begin(&sleeped_list); e != list_end(&sleeped_list); ){
+		t = list_entry(e, struct thread, elem);
+		if(timer_elapsed(t->start_sleep_time) <= t->sleep_time)
 			thread_yield();
-		break;
+		else e = list_next(e);
 	}
   thread_tick ();
 }

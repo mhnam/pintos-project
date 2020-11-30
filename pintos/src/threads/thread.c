@@ -216,7 +216,7 @@ thread_block (void)
 	ASSERT (!intr_context ());
   ASSERT (intr_get_level () == INTR_OFF);
 
-  t->status = THREAD_BLOCKED;
+  thread_current()->status = THREAD_BLOCKED;
   schedule ();
 }
 
@@ -462,7 +462,7 @@ init_thread (struct thread *t, const char *name, int priority)
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
-	t->sleep_time = 0;
+	t->sleep_time = (int64_t)0;
 	t->start_sleep_time = (int64_t)0;
   t->magic = THREAD_MAGIC;
 
