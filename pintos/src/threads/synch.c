@@ -122,7 +122,7 @@ sema_up (struct semaphore *sema)
 			if(list_entry(e, struct thread, elem)->priority >
 				 maxt->priority){
 				maxe = e;
-				maxt = list_entry(e, struct thread, elem);
+				maxt = t;
 			}
 		}
 		list_remove(maxe);

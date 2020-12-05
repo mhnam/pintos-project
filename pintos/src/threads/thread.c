@@ -54,10 +54,10 @@ static long long user_ticks;    /* # of timer ticks in user programs. */
 #define TIME_SLICE 4            /* # of timer ticks to give each thread. */
 static unsigned thread_ticks;   /* # of timer ticks since last yield. */
 
-//#ifndef USERPROG
+#ifndef USERPROG
 /*Project #3*/
-//bool thread_prior_aging;
-//#endif
+bool thread_prior_aging;
+#endif
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
@@ -328,7 +328,7 @@ thread_yield (void)
 
   old_level = intr_disable ();
   if (cur != idle_thread) 
-    list_insert_ordered(&ready_list, &cur->elem, priority_compare, NULL);
+    list_push_ordered(&ready_list, &cur->elem, priority_compare, NULL);
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -355,7 +355,7 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
-	if(new_priority >= thread_current()->priority)
+	if(new_priority > thread_current()->priority)
 		thread_current()->priority = new_priority;
 	else{
 		thread_current()->priority = new_priority;
