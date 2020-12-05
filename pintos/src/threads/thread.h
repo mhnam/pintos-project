@@ -6,6 +6,11 @@
 #include <stdint.h>
 #include "threads/synch.h"
 
+#ifndef USERPROG
+/*Project #3*/
+extern bool thread_prior_aging;
+#endif
+
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -153,3 +158,5 @@ int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
 #endif /* threads/thread.h */
+
+bool priority_compare(struct list_elem* e1, struct list_elem* e2, void* aux);

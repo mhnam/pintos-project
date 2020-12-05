@@ -54,6 +54,11 @@ static long long user_ticks;    /* # of timer ticks in user programs. */
 #define TIME_SLICE 4            /* # of timer ticks to give each thread. */
 static unsigned thread_ticks;   /* # of timer ticks since last yield. */
 
+#ifndef USERPROG
+/*Project #3*/
+bool thread_prior_aging;
+#endif
+
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
    Controlled by kernel command-line option "-o mlfqs". */
@@ -137,6 +142,14 @@ thread_tick (void)
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
+
+	#ifndef USERPROG
+	/*Projct #3*/
+	thread_wake_up();
+
+	if(thread_prior_aging == true)
+		thread_aging();
+	#endif
 }
 
 /* Prints thread statistics. */
@@ -199,7 +212,10 @@ thread_create (const char *name, int priority,
   sf->ebp = 0;
 
   /* Add to run queue. */
-  thread_unblock (t);
+	thread_unblock (t);
+	
+	/* Let the created thread run immediately if the priority if higher than current thread */
+	if(thread_current()->priority < priority) thread_yield();
 
   return tid;
 }
@@ -237,7 +253,7 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  list_push_back (&ready_list, &t->elem);
+  list_insert_ordered (&ready_list, &t->elem, priority_compare, NULL);
   t->status = THREAD_READY;
   intr_set_level (old_level);
 }
@@ -296,6 +312,10 @@ thread_exit (void)
   NOT_REACHED ();
 }
 
+bool priority_compare(struct list_elem* e1, struct list_elem* e2, void* aux){
+	return list_entry(e1, struct thread, elem)->priority > list_entry(e2, struct thread, elem)->priority;
+}
+
 /* Yields the CPU.  The current thread is not put to sleep and
    may be scheduled again immediately at the scheduler's whim. */
 void
@@ -308,7 +328,7 @@ thread_yield (void)
 
   old_level = intr_disable ();
   if (cur != idle_thread) 
-    list_push_back (&ready_list, &cur->elem);
+    list_push_ordered(&ready_list, &cur->elem, priority_compare, NULL);
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -335,7 +355,12 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
-  thread_current ()->priority = new_priority;
+	if(new_priority > thread_current()->priority)
+		thread_current()->priority = new_priority;
+	else{
+		thread_current()->priority = new_priority;
+		thread_yield();
+	}
 }
 
 /* Returns the current thread's priority. */
