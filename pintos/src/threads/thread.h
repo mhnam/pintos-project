@@ -153,3 +153,5 @@ int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
 #endif /* threads/thread.h */
+
+bool priority_compare(struct list_elem* e1, struct list_elem* e2, void* aux);
