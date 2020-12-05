@@ -143,13 +143,13 @@ thread_tick (void)
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
 
-//	#ifndef USERPROG
-//	/*Projct #3*/
-//	thread_wake_up();
+	#ifndef USERPROG
+	/*Projct #3*/
+	thread_wake_up();
 
-//	if(thread_prior_aging == true)
-//		thread_aging();
-//	#endif
+	if(thread_prior_aging == true)
+		thread_aging();
+	#endif
 }
 
 /* Prints thread statistics. */
