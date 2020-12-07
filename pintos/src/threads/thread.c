@@ -376,18 +376,20 @@ thread_get_priority (void)
 void
 thread_set_nice (int nice UNUSED) 
 {
-	thread_current()->nice = nice;
-	thread_current()->priority = float_sub_float(float_sub_float(float_add_int(0, PRI_MAX), float_div_int(t->recent_cpu, 4)), int_mul_float(t->nice, float_add_int(0, 2))) / (1<<14);
-	if(thread_current()->priority < PRI_MIN)
+	struct thread* t = thread_current();
+	
+	t->nice = nice;
+	t->priority = float_sub_float(float_sub_float(float_add_int(0, PRI_MAX), float_div_int(t->recent_cpu, 4)), int_mul_float(t->nice, float_add_int(0, 2))) / (1<<14);
+	if(t->priority < PRI_MIN)
 		t->priority = PRI_MIN;
-	else if (thread_current()->priority > PRI_MAX)
+	else if (t->priority > PRI_MAX)
 		t->priority = PRI_MAX;
 
 	/*chk whether running thread has larger than any other new priority in waiting threads. OTHERWISE YIELD ON RETURN as it is currently interrupted*/
 	int max_prior = -1;
 	if(!list_empty(&ready_list))
 		max_prior = list_entry(list_front(&ready_list), struct thread, elem)->priority;
-	if(thread_current()->priority < max_prior)
+	if(t->priority < max_prior)
 		thread_yield();
 }
 
@@ -665,11 +667,15 @@ int float_sub_float(int a, int b){
 }
 
 int float_mul_float(int a, int b){
-	return (int) a * b / (1<<14);
+	int64_t tmp = a;
+	tmp = tmp * b / (1<<14)
+	return (int) tmp;
 }
 
 int float_div_float(int a, int b){
-	return (int) a * (1<<14) / b;
+	int64_t tmp = a;
+	tmp = tmp * (1<<14) / b;
+	return (int) tmp;
 }
 
 void update_values(void){ /*should be updated every second*/
