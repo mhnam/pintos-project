@@ -163,9 +163,9 @@ int thread_get_load_avg (void);
 
 bool priority_compare(struct list_elem* e1, struct list_elem* e2, void* aux);
 
-int int_sub_float(int a, int b);
-int int_mul_float(int a, int b);
 int float_add_int(int a, int b);
+int float_sub_int(int a, int b);
+int float_mul_int(int a, int b);
 int float_div_int(int a, int b);
 int float_add_float(int a, int b);
 int float_sub_float(int a, int b);

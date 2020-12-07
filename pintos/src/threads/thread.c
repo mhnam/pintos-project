@@ -11,6 +11,8 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#define CONVERT (1<<14)
+
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -379,7 +381,7 @@ thread_set_nice (int nice UNUSED)
 	struct thread* t = thread_current();
 	
 	t->nice = nice;
-	t->priority = float_sub_float(float_sub_float(float_add_int(0, PRI_MAX), float_div_int(t->recent_cpu, 4)), int_mul_float(t->nice, float_add_int(0, 2))) / (1<<14);
+	t->priority = float_sub_float(float_sub_float(PRI_MAX*CONVERT, float_div_int(t->recent_cpu, 4)), float_mul_int(t->nice * CONVERT, 2)) / CONVERT;
 	if(t->priority < PRI_MIN)
 		t->priority = PRI_MIN;
 	else if (t->priority > PRI_MAX)
@@ -404,14 +406,14 @@ thread_get_nice (void)
 int
 thread_get_load_avg (void) 
 {
-  return int_mul_float(100, load_avg) / (1<<14);
+  return float_mul_int(load_avg, 100)/CONVERT;
 }
 
 /* Returns 100 times the current thread's recent_cpu value. */
 int
 thread_get_recent_cpu (void) 
 {
-  return int_mul_float(100, thread_current()->recent_cpu) / (1<<14);
+  return float_mul_int(thread_current()->recent_cpu, 100)/CONVERT;
 }
 
 /* Idle thread.  Executes when no other thread is ready to run.
@@ -642,16 +644,16 @@ allocate_tid (void)
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
 
-int int_sub_float(int a, int b){
-	return a * (1<<14) - b;
-}
-
-int int_mul_float(int a, int b){
-	return a * b;
-}
-
 int float_add_int(int a, int b){
-	return a + b * (1<<14);
+	return a + b * CONVERT;
+}
+
+int float_sub_int(int a, int b){
+	return a - b * CONVERT;
+}
+
+int float_mul_int(int a, int b){
+	return a * b;
 }
 
 int float_div_int(int a, int b){
@@ -667,14 +669,14 @@ int float_sub_float(int a, int b){
 }
 
 int float_mul_float(int a, int b){
-	int64_t tmp = a;
-	tmp = tmp * b / (1<<14);
+	int64_t tmp = (int64_t) a;
+	tmp = tmp * b / CONVERT;
 	return (int) tmp;
 }
 
 int float_div_float(int a, int b){
-	int64_t tmp = a;
-	tmp = tmp * (1<<14) / b;
+	int64_t tmp = (int64_t) a;
+	tmp = tmp * CONVERT / b;
 	return (int) tmp;
 }
 
@@ -682,16 +684,17 @@ void update_values(void){ /*should be updated every second*/
 	struct list_elem* e;
 	int ready_threads;
 	
-	if(thread_current() != idle_thread)
+	if(thread_current() == idle_thread)
+		ready_threads = list_size(&ready_list);
+	else
 		ready_threads = list_size(&ready_list) + 1;
-	else 	ready_threads = list_size(&ready_list);
 
-	load_avg = float_div_float(float_add_int(int_mul_float(59, load_avg), ready_threads), 60);
+	load_avg = float_div_float(float_add_int(float_mul_int(load_avg, 59), ready_threads), 60);
 	
   for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e)){
 		struct thread *t = list_entry (e, struct thread, allelem);
 		if(t != idle_thread){
-			t->recent_cpu = float_add_int(float_mul_float(float_div_float(int_mul_float(2, load_avg), float_add_int(int_mul_float(2, load_avg), 1)), t->recent_cpu), t->nice); /*(2 * load_avg)/(2 * load_avg + 1) * recent_cpu + nice*/
+			t->recent_cpu = float_add_int(float_mul_float(float_div_float(float_mul_int(load_avg, 2), float_add_int(float_mul_int(load_avg, 2), 1)), t->recent_cpu), t->nice); /*(2 * load_avg)/(2 * load_avg + 1) * recent_cpu + nice*/
 		}
   }
 }
@@ -702,7 +705,7 @@ void update_priority(void){ /*should be updated every four ticks*/
 	/*update new priority*/
 	for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e)){
 		struct thread *t = list_entry (e, struct thread, allelem);
-		int tmp = float_sub_float(float_sub_float(float_add_int(0, PRI_MAX), float_div_int(t->recent_cpu, 4)), int_mul_float(2, float_add_int(0, t->nice))) / (1<<14);
+		int tmp = float_sub_float(float_sub_float(PRI_MAX*CONVERT, float_div_int(t->recent_cpu, 4)), float_mul_int(t->nice * CONVERT, 2)) / CONVERT;
 		if(tmp < PRI_MIN)
 			t->priority = PRI_MIN;
 		else if (tmp > PRI_MAX)

@@ -191,7 +191,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
 	
 	for(e = list_begin(&sleeped_list); e != list_end(&sleeped_list); ){
 		t = list_entry(e, struct thread, elem);
-		if(timer_elapsed(t->start_sleep_time) > t->sleep_time){
+		if(timer_elapsed(t->start_sleep_time) >= t->sleep_time){
 			e = list_remove(e);
 			thread_unblock(t);
 		}
