@@ -200,9 +200,9 @@ timer_interrupt (struct intr_frame *args UNUSED)
 	
 	if(thread_prior_aging || thread_mlfqs){
 		thread_current()->recent_cpu = float_add_int(thread_current()->recent_cpu, 1); /*update recent_cpu*/
-		if(ticks % TIMER_FREQ == 0)
+		if(timer_ticks() % TIMER_FREQ == 0)
 			update_values();
-		if(ticks % 4 == 0)
+		if(timer_ticks() % 4 == 0)
 			update_priority();
 	}
   thread_tick ();

@@ -668,7 +668,7 @@ int float_sub_float(int a, int b){
 
 int float_mul_float(int a, int b){
 	int64_t tmp = a;
-	tmp = tmp * b / (1<<14)
+	tmp = tmp * b / (1<<14);
 	return (int) tmp;
 }
 
@@ -698,12 +698,11 @@ void update_values(void){ /*should be updated every second*/
 
 void update_priority(void){ /*should be updated every four ticks*/
 	struct list_elem* e;
-	int tmp;
 
 	/*update new priority*/
 	for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e)){
 		struct thread *t = list_entry (e, struct thread, allelem);
-		tmp = float_sub_float(float_sub_float(float_add_int(0, PRI_MAX), float_div_int(t->recent_cpu, 4)), int_mul_float(t->nice, float_add_int(0, 2))) / (1<<14);
+		int tmp = float_sub_float(float_sub_float(float_add_int(0, PRI_MAX), float_div_int(t->recent_cpu, 4)), int_mul_float(2, float_add_int(0, t->nice))) / (1<<14);
 		if(tmp < PRI_MIN)
 			t->priority = PRI_MIN;
 		else if (tmp > PRI_MAX)
