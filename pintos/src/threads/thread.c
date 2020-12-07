@@ -689,7 +689,7 @@ void update_values(void){ /*should be updated every second*/
 	else
 		ready_threads = list_size(&ready_list) + 1;
 
-	load_avg = float_div_float(float_add_int(float_mul_int(load_avg, 59), ready_threads), 60);
+	load_avg = float_div_float(float_add_int(float_mul_int(load_avg, 59), ready_threads), 60*CONVERT);
 	
   for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e)){
 		struct thread *t = list_entry (e, struct thread, allelem);
@@ -701,11 +701,12 @@ void update_values(void){ /*should be updated every second*/
 
 void update_priority(void){ /*should be updated every four ticks*/
 	struct list_elem* e;
-
+	int tmp;
+	
 	/*update new priority*/
 	for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e)){
 		struct thread *t = list_entry (e, struct thread, allelem);
-		int tmp = float_sub_float(float_sub_float(PRI_MAX*CONVERT, float_div_int(t->recent_cpu, 4)), float_mul_int(t->nice * CONVERT, 2)) / CONVERT;
+		tmp = float_sub_float(float_sub_float(PRI_MAX*CONVERT, float_div_int(t->recent_cpu, 4)), float_mul_int(t->nice * CONVERT, 2)) / CONVERT;
 		if(tmp < PRI_MIN)
 			t->priority = PRI_MIN;
 		else if (tmp > PRI_MAX)
