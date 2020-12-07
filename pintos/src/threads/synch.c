@@ -114,17 +114,18 @@ sema_up (struct semaphore *sema)
 
   old_level = intr_disable ();
   if (!list_empty (&sema->waiters)){
-		struct list_elem *e;
+		struct list_elem *e = list_begin(&sema->waiters);
 		struct list_elem *maxe = list_begin(&sema->waiters);
 		struct thread *maxt = list_entry(e, struct thread, elem);
 		
-		for(e = list_begin(&sema->waiters); e != list_end(&sema->waiters); e = list_next(e)){
+		for(e = list_next(e); e != list_end(&sema->waiters); e = list_next(e)){
 			if(list_entry(e, struct thread, elem)->priority >
 				 maxt->priority){
 				maxe = e;
 				maxt = list_entry(e, struct thread, elem);
 			}
 		}
+		
 		list_remove(maxe);
     thread_unblock(maxt);
 	}

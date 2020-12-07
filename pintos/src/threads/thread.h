@@ -6,6 +6,11 @@
 #include <stdint.h>
 #include "threads/synch.h"
 
+#ifndef USERPROG
+/*prj 3*/
+extern bool thread_prior_aging;
+#endif
+
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -89,6 +94,8 @@ struct thread
     char name[16];                      /* Name (for debugging purposes). */
     uint8_t *stack;                     /* Saved stack pointer. */
     int priority;                       /* Priority. */
+		int recent_cpu;
+		int nice;
 		int64_t sleep_time;                 /* Sleep Time */
 		int64_t start_sleep_time;
     struct list_elem allelem;           /* List element for all threads list. */
@@ -155,3 +162,15 @@ int thread_get_load_avg (void);
 #endif /* threads/thread.h */
 
 bool priority_compare(struct list_elem* e1, struct list_elem* e2, void* aux);
+
+int int_sub_float(int a, int b);
+int int_mul_float(int a, int b);
+int float_add_int(int a, int b);
+int float_div_int(int a, int b);
+int float_add_float(int a, int b);
+int float_sub_float(int a, int b);
+int float_mul_float(int a, int b);
+int float_div_float(int a, int b);
+
+void update_values(void);
+void update_priority(void);

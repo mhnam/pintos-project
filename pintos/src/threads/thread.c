@@ -37,6 +37,8 @@ static struct thread *initial_thread;
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock;
 
+static int load_avg;
+
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
   {
@@ -53,6 +55,11 @@ static long long user_ticks;    /* # of timer ticks in user programs. */
 /* Scheduling. */
 #define TIME_SLICE 4            /* # of timer ticks to give each thread. */
 static unsigned thread_ticks;   /* # of timer ticks since last yield. */
+
+#ifndef USERPROG
+/*prj 3*/
+extern bool thread_prior_aging;
+#endif
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
@@ -92,10 +99,13 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
+	load_avg = 0;
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
   init_thread (initial_thread, "main", PRI_DEFAULT);
+	initial_thread->nice = 0;
+	initial_thread->recent_cpu = 0;
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
 }
@@ -137,6 +147,9 @@ thread_tick (void)
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
+	
+	if (thread_prior_aging == true)
+		thread_aging();
 }
 
 /* Prints thread statistics. */
@@ -361,31 +374,32 @@ thread_get_priority (void)
 void
 thread_set_nice (int nice UNUSED) 
 {
-  /* Not yet implemented. */
+	thread_current()->nice = nice;
+	/*
+	- set the current thread's nice valued to new nice
+	- reclcultate the thread's priority based on the new value
+	*/
 }
 
 /* Returns the current thread's nice value. */
 int
 thread_get_nice (void) 
 {
-  /* Not yet implemented. */
-  return 0;
+  return thread_current() -> nice;
 }
 
 /* Returns 100 times the system load average. */
 int
 thread_get_load_avg (void) 
 {
-  /* Not yet implemented. */
-  return 0;
+  return int_mul_float(100, load_avg) / (1<<14);
 }
 
 /* Returns 100 times the current thread's recent_cpu value. */
 int
 thread_get_recent_cpu (void) 
 {
-  /* Not yet implemented. */
-  return 0;
+  return int_mul_float(100, thread_current()->recent_cpu) / (1<<14);
 }
 
 /* Idle thread.  Executes when no other thread is ready to run.
@@ -477,6 +491,8 @@ init_thread (struct thread *t, const char *name, int priority)
 	t->sleep_time = (int64_t)0;
 	t->start_sleep_time = (int64_t)0;
   t->magic = THREAD_MAGIC;
+	t->recent_cpu = running_thread()->recent_cpu; /*inherits value of the parent*/
+	t->nice = running_thread()->nice; /*inherits value of the parent*/
 
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
@@ -613,3 +629,77 @@ allocate_tid (void)
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
+
+int int_sub_float(int a, int b){
+	return a * (1<<14) - b;
+}
+
+int int_mul_float(int a, int b){
+	return a * b;
+}
+
+int float_add_int(int a, int b){
+	return a + b * (1<<14);
+}
+
+int float_div_int(int a, int b){
+	return a / b;
+}
+
+int float_add_float(int a, int b){
+	return a + b;
+}
+
+int float_sub_float(int a, int b){
+	return a - b;
+}
+
+int float_mul_float(int a, int b){
+	return (int) a * b / (1<<14);
+}
+
+int float_div_float(int a, int b){
+	return (int) a * (1<<14) / b;
+}
+
+void update_values(void){ /*should be updated every second*/
+	struct list_elem* e;
+	int ready_threads;
+	
+	if(thread_current() != idle_thread)
+		ready_threads = list_size(&ready_list) + 1;
+	else 	ready_threads = list_size(&ready_list);
+
+	load_avg = float_div_float(float_add_int(int_mul_float(59, load_avg), ready_threads), 60);
+	
+  for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e)){
+		struct thread *t = list_entry (e, struct thread, allelem);
+		if(t != idle_thread){
+			t->recent_cpu = float_add_int(float_mul_float(float_div_float(int_mul_float(2, load_avg), float_add_int(int_mul_float(2, load_avg), 1)), t->recent_cpu), t->nice); /*(2 * load_avg)/(2 * load_avg + 1) * recent_cpu + nice*/
+		}
+  }
+}
+
+void update_priority(void){ /*should be updated every four ticks*/
+	struct list_elem* e;
+	int tmp;
+
+	/*update new priority*/
+	for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e)){
+		struct thread *t = list_entry (e, struct thread, allelem);
+		tmp = float_sub_float(float_sub_float(float_add_int(0, PRI_MAX), float_div_int(t->recent_cpu, 4)), int_mul_float(t->nice, float_add_int(0, 2))) / (1<<14);
+		if(tmp < PRI_MIN)
+			t->priority = PRI_MIN;
+		else if (tmp > PRI_MAX)
+			t->priority = PRI_MAX;
+		else t->priority = tmp;
+	}
+	
+	/*chk whether running thread has larger than any other new priority in waiting threads. OTHERWISE YIELD ON RETURN as it is currently interrupted*/
+	tmp = -1;
+	if(!list_empty(&ready_list))
+		tmp = list_entry(list_front(&ready_list), struct thread, elem)->priority;
+	
+	if(thread_current()->priority < tmp)
+		intr_yield_on_return();
+}
