@@ -129,11 +129,7 @@ sema_up (struct semaphore *sema)
 		list_remove(maxe);
     thread_unblock(maxt);
 	}
-	/*
-  if (!list_empty (&sema->waiters)) 
-    thread_unblock (list_entry (list_pop_front (&sema->waiters),
-                                struct thread, elem));
-	*/
+
 	sema->value++;
   intr_set_level (old_level);
 	thread_yield();
