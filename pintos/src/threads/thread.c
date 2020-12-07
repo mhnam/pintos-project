@@ -58,7 +58,7 @@ static unsigned thread_ticks;   /* # of timer ticks since last yield. */
 
 #ifndef USERPROG
 /*prj 3*/
-extern bool thread_prior_aging;
+bool thread_prior_aging;
 #endif
 
 /* If false (default), use round-robin scheduler.
@@ -148,8 +148,8 @@ thread_tick (void)
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
 	
-	if (thread_prior_aging == true)
-		thread_aging();
+//	if (thread_prior_aging == true)
+//		thread_aging();
 }
 
 /* Prints thread statistics. */
@@ -355,6 +355,8 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
+	if(thread_mlfqs)
+		return; /*ignore new priority*/
 	if(new_priority >= thread_current()->priority)
 		thread_current ()->priority = new_priority;
 	else{
@@ -375,10 +377,18 @@ void
 thread_set_nice (int nice UNUSED) 
 {
 	thread_current()->nice = nice;
-	/*
-	- set the current thread's nice valued to new nice
-	- reclcultate the thread's priority based on the new value
-	*/
+	thread_current()->priority = float_sub_float(float_sub_float(float_add_int(0, PRI_MAX), float_div_int(t->recent_cpu, 4)), int_mul_float(t->nice, float_add_int(0, 2))) / (1<<14);
+	if(thread_current()->priority < PRI_MIN)
+		t->priority = PRI_MIN;
+	else if (thread_current()->priority > PRI_MAX)
+		t->priority = PRI_MAX;
+
+	/*chk whether running thread has larger than any other new priority in waiting threads. OTHERWISE YIELD ON RETURN as it is currently interrupted*/
+	int max_prior = -1;
+	if(!list_empty(&ready_list))
+		max_prior = list_entry(list_front(&ready_list), struct thread, elem)->priority;
+	if(thread_current()->priority < max_prior)
+		thread_yield();
 }
 
 /* Returns the current thread's nice value. */
