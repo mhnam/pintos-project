@@ -18,7 +18,6 @@
 #include "threads/vaddr.h"
 #include "threads/malloc.h"
 #include "vm/page.h"
-#include "vm/swap.h"
 #include <stdlib.h>
 
 static thread_func start_process NO_RETURN;
@@ -595,7 +594,7 @@ setup_stack (void **esp)
 	struct vm_entry *vme = (struct vm_entry *)malloc(sizeof(struct vm_entry));
 	if(!vme)
 		return false;
-	kpage = alloc_page(PAL_USER | PAL_ZERO);
+	kpage = palloc_get_page(PAL_USER | PAL_ZERO);
 	
 	#else
   kpage = palloc_get_page (PAL_USER | PAL_ZERO);
@@ -609,7 +608,7 @@ setup_stack (void **esp)
 //		add_page_to_lru_list(kpage);
 		success = install_page(upage, kpage->kaddr, true)
 		if(!success){
-			free_page_kaddr(kpage);
+			palloc_free_page(kpage);
 			free(vme);
 		}
 		
