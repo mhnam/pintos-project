@@ -158,9 +158,8 @@ process_exit (void)
 
 	#ifdef VM
 		/* Destroy the current process's supplemental page table. */
-		struct hash *pt = cur->vm;
-		if (pt != NULL)
-			vm_destroy(pt);
+	if (cur->vm != NULL)
+		vm_destroy(&cur->vm);
 	#endif
 	
 	/* Destroy the current process's page directory and switch back
@@ -533,10 +532,9 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
       size_t page_zero_bytes = PGSIZE - page_read_bytes;
 		
 		#ifdef VM
-	  struct vm *vm = thread_current()->vm;
-		struct vm_entry vme;
-		
+		struct vm_entry *vme;	
 		vme = (struct vm_entry *)malloc(sizeof(struct vm_entry));
+		
 		if(!vme)
 			return false;
 		
@@ -549,7 +547,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		vme->read_bytes = page_read_bytes;
 		vme->zero_bytes = page_zero_bytes;
 		
-		insert_vme(vm, vme);
+		insert_vme(&thread_current()->vm, vme);
 		
 		#else
       // Get a page of memory.
@@ -590,12 +588,15 @@ setup_stack (void **esp)
 {
   uint8_t *kpage;
   bool success = false;
+	
 	#ifdef VM
 	struct vm_entry *vme = (struct vm_entry *)malloc(sizeof(struct vm_entry));
 	if(!vme)
 		return false;
-	kpage = palloc_get_page(PAL_USER | PAL_ZERO);
 	
+	kpage = palloc_get_page(PAL_USER | PAL_ZERO);
+  void *upage = ((uint8_t *) PHYS_BASE) - PGSIZE;
+
 	#else
   kpage = palloc_get_page (PAL_USER | PAL_ZERO);
 	
@@ -604,9 +605,7 @@ setup_stack (void **esp)
 	if (kpage != NULL) 
     {
 		#ifdef VM
-		kpage->vme = vme;
-//		add_page_to_lru_list(kpage);
-		success = install_page(upage, kpage->kaddr, true)
+		success = install_page(upage, kpage, true);
 		if(!success){
 			palloc_free_page(kpage);
 			free(vme);
@@ -614,13 +613,13 @@ setup_stack (void **esp)
 		
 		*esp = PHYS_BASE;
 		
-		memset(kpage->vme, 0, size)
-		kpage->vme->type = VM_ANON;
-		kpage->vme->vaddr = upage;
-		kpage->vme->writable = true;
-		kpage->vme->is_loaded = true;
+		memset(vme, 0, sizeof(struct vm_entry));
+		vme->type = VM_ANON;
+		vme->vaddr = upage;
+		vme->writable = true;
+		vme->is_loaded = true;
 
-		insert_vme (&thread_current ()->vm, kpage->vme);
+		insert_vme (&thread_current()->vm, vme);
 		
 		#else
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
@@ -653,8 +652,7 @@ install_page (void *upage, void *kpage, bool writable)
           && pagedir_set_page (t->pagedir, upage, kpage, writable));
 }
 
-bool
-handle_mm_fault (struct vm_entry *vme)
+bool handle_mm_fault(struct vm_entry *vme)
 {
  uint8_t *kpage;
   if (vme->type == VM_BIN){
