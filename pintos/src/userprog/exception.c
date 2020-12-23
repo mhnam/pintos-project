@@ -2,9 +2,6 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include "userprog/gdt.h"
-#include "userprog/syscall.h"
-#include "userprog/process.h"
-#include "vm/page.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
@@ -151,26 +148,7 @@ page_fault (struct intr_frame *f)
   not_present = (f->error_code & PF_P) == 0;
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
-	
-	#ifdef VM
-	struct vm_entry *vme;
-	if(!not_present)
-		exit(-1);
-	vme = find_vme(fault_addr);
-	if(!vme){
-		int32_t addr = (int32_t)fault_addr;
-		bool chk_stack = is_user_vaddr(addr) && f->esp - addr <= 32 && 0xC0000000UL - addr <= 8 * 1024 * 1024;
-		
-		if(!chk_stack)
-			exit(-1);
-		
-		expand_stack(fault_addr);
-		return;
-	}
-	if(!handle_mm_fault(vme))
-		exit(-1);
-	
-	#else
+
 	if(is_kernel_vaddr(fault_addr))	exit(-1);
 	if(!user || not_present)	exit(-1);
 
@@ -183,6 +161,5 @@ page_fault (struct intr_frame *f)
           write ? "writing" : "reading",
           user ? "user" : "kernel");
   kill (f);
-	#endif
 }
 
