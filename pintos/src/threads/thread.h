@@ -4,7 +4,6 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
-#include <hash.h>
 #include "threads/synch.h"
 
 #ifndef USERPROG
@@ -104,26 +103,24 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
-		#ifdef USERPROG
+#ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
 	
-		/*elements for process wait, and exit*/
-		struct semaphore wait_child; /*held by child while thread is alive*/
-		struct semaphore exit_child; /*held by parent while parent is not waiting child*/
-		struct list child_list; /*list for managing child*/
-		struct list_elem child_elem; /*actual child list*/
-		int exit_status;
-		bool fl;
-
-		/*elements for file structure*/
-		struct file* fd[128];
-		#endif
+	/*elements for process wait, and exit*/
+	struct semaphore wait_child; /*held by child while thread is alive*/
+	struct semaphore exit_child; /*held by parent while parent is not waiting child*/
+	struct list child_list; /*list for managing child*/
+	struct list_elem child_elem; /*actual child list*/
+	int exit_status;
+	bool fl;
 	
-    /* Owned by thread.c. */
-		unsigned magic;                   /* Detects stack overflow. */
+	/*elements for file structure*/
+	struct file* fd[128];
+#endif
 
-		struct hash vm;                   /* 스레드가 가진 가상 주소 공간을 관리하는 해시테이블 */
+    /* Owned by thread.c. */
+    unsigned magic;                     /* Detects stack overflow. */
   };
 
 /* If false (default), use round-robin scheduler.
