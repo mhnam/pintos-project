@@ -10,6 +10,7 @@
 #include "filesys/filesys.h"
 #include "filesys/inode.h"
 #include "filesys/off_t.h"
+#include "vm/page.h"
 
 static int arg_size[SYS_MAX_NUM];
 
@@ -30,7 +31,7 @@ THINGS TO DO:
 
 /*handler*/
 void chk_address(struct intr_frame *f);
-//static void get_argument(void *esp, int *arg, int count);
+static void get_argument(void *esp, int *arg, int count);
 static void syscall_handler(struct intr_frame *);
 
 void
@@ -57,33 +58,26 @@ syscall_init (void)
 
 /* check whether given address is user area;
 otherwise exit process (i.e., inbetween 0x8048000~0xc0000000) */
-void chk_address(struct intr_frame *f){
-	int i, j = 20;
-	int syscall_num = * (uint32_t *) f->esp;
-	if(arg_size[syscall_num] == 1){
-		if(is_user_vaddr(f->esp + 4) == 0)
-			exit(-1);
-	}
-	else{
-		for(i=0; i<arg_size[syscall_num]; i++){
-			if(is_user_vaddr(f->esp + j) == 0)
-				exit(-1);
-			j+=4;
-		}
-	}
+void chk_address(void *addr){
+	if (!(is_user_vaddr (addr) && addr >= (void *)0x08048000UL && find_vme (addr)))
+		exit(-1);
 }
 
-/*
 static void get_argument(void *esp, int *arg, int count){
-
+  ASSERT (1 <= count && count <= 4);
+  while (count--)
+  {
+    check_address4 (++esp);
+    *(args++) = *esp;
+  }
 }
-*/
 
 static void
 syscall_handler (struct intr_frame *f) 
 {
 	//check whether esp and ptr are user space; otherwise page fault
-	chk_address(f);
+	chk_address(f->esp);
+	chk_address(f->esp + 3);
 
 	//getting syscall num from user stack
   int syscall_num = * (uint32_t *) f->esp;

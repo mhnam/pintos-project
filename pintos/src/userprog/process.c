@@ -588,10 +588,12 @@ setup_stack (void **esp)
 {
   uint8_t *kpage;
   bool success = false;
+	
 	#ifdef VM
 	struct vm_entry *vme = (struct vm_entry *)malloc(sizeof(struct vm_entry));
 	if(!vme)
 		return false;
+	
 	kpage = palloc_get_page (PAL_USER | PAL_ZERO);
 	void *upage = ((uint8_t *) PHYS_BASE) - PGSIZE;
 	
@@ -599,7 +601,6 @@ setup_stack (void **esp)
 	kpage = palloc_get_page (PAL_USER | PAL_ZERO);
 	
 	#endif
-	
 	
   if (kpage != NULL) 
     {
@@ -660,8 +661,7 @@ handle_mm_fault (struct vm_entry *vme)
 		kpage = palloc_get_page (PAL_USER);
 		if (kpage == NULL)
 			return false;
-		if (!load_file (kpage, vme) ||
-				!install_page (vme->vaddr, kpage, vme->writable))
+		if (!load_file (kpage, vme) || !install_page (vme->vaddr, kpage, vme->writable))
 			{
 				palloc_free_page (kpage);
 				return false;
