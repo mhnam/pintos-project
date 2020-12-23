@@ -9,7 +9,7 @@
 
 void syscall_init (void);
 
-/*syscalls
+/*syscalls*/
 void halt (void);
 void exit (int status);
 pid_t exec (const char *file);
@@ -25,7 +25,7 @@ unsigned tell (int fd);
 void close (int fd);
 int fibonacci(int n);
 int max_of_four_int(int a, int b, int c, int d);
-*/
+
 /*
 void syscall_halt (struct intr_frame *f);
 void syscall_exit (struct intr_frame *f);
