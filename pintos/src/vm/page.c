@@ -6,8 +6,6 @@
 #include "threads/interrupt.h"
 #include "userprog/pagedir.h"
 #include "vm/page.h"
-#include "vm/frame.h"
-#include "vm/swap.h"
 #include <string.h>
 
 void vm_init (struct hash* vm)
@@ -58,8 +56,6 @@ bool delete_vme (struct hash *vm, struct vm_entry *vme)
 
   if (hash_delete(vm, &vme->elem) == 0)
     return false;
-  free_page_vaddr(vme->vaddr);
-  swap_clear(vme->swap_slot);
   free(vme);
   return true;
 }

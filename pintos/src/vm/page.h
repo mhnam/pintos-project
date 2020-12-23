@@ -1,5 +1,4 @@
 #include <hash.h>
-#include "frame.h"
 #include "threads/thread.h"
 #include "lib/kernel/list.h"
 
@@ -23,7 +22,7 @@ struct vm_entry{
 	size_t swap_slot; /* 스왑 슬롯 */
 	/* ‘vm_entry들을 위한 자료구조’ 부분에서 다룰 예정 */
 	struct hash_elem elem; /* 해시 테이블 Element */
-}
+};
 
 
 void vm_init (struct hash* vm);
