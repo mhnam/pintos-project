@@ -11,6 +11,8 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "vm/page.h"
+
 #define CONVERT (1<<14)
 
 #ifdef USERPROG
