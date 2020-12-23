@@ -164,6 +164,7 @@ page_fault (struct intr_frame *f)
 		if(!chk_stack)
 			exit(-1);
 		
+		expand_stack(fault_addr);
 		return;
 	}
 	if(!handle_mm_fault(vme))

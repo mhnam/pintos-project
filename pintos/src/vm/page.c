@@ -58,6 +58,8 @@ bool delete_vme (struct hash *vm, struct vm_entry *vme)
 	
   if (hash_delete(vm, &vme->elem) == 0)
     return false;
+  free_page_vaddr(vme->vaddr);
+  swap_clear(vme->swap_slot);
   free(vme);
   return true;
 }
@@ -90,7 +92,10 @@ static void
 vm_destroy_func (struct hash_elem *e, void *aux UNUSED)
 {
   ASSERT (e != NULL);
-  free(hash_entry(e, struct vm_entry, elem));
+  struct vm_entry *vme = hash_entry (e, struct vm_entry, elem);
+  free_page_vaddr(vme->vaddr);
+  swap_clear(vme->swap_slot);
+  free(vme);
 }
 
 bool load_file (void* kaddr, struct vm_entry *vme)
