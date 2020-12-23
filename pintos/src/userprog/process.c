@@ -84,11 +84,11 @@ start_process (void *file_name_)
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-	printf(">>	[DEBUG] Starting Loading...\n");
+//	printf(">>	[DEBUG] Starting Loading...\n");
   success = load (file_name, &if_.eip, &if_.esp);
 	thread_current()->fl = success;
 	sema_up(&thread_current()->wait_child);
-	printf(">>	[DEBUG] Load Completed\n");
+//	printf(">>	[DEBUG] Load Completed\n");
 
   /* If load failed, quit. */
   palloc_free_page (file_name);
