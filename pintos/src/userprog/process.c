@@ -158,6 +158,7 @@ process_exit (void)
 
 	#ifdef VM
 		/* Destroy the current process's supplemental page table. */
+	if (cur->vm != NULL)
 		vm_destroy(&cur->vm);
 	#endif
 	
