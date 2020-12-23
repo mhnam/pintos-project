@@ -183,9 +183,11 @@ thread_create (const char *name, int priority,
   /* Initialize thread. */
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
-
+	
+	#ifdef VM
 	/*create vm hash table*/
 	vm_init(&t->vm);	
+	#endif
 	
   /* Stack frame for kernel_thread(). */
   kf = alloc_frame (t, sizeof *kf);

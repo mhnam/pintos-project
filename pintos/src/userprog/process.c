@@ -653,6 +653,7 @@ install_page (void *upage, void *kpage, bool writable)
           && pagedir_set_page (t->pagedir, upage, kpage, writable));
 }
 
+#ifdef VM
 bool
 handle_mm_fault (struct vm_entry *vme)
 {
@@ -670,4 +671,5 @@ handle_mm_fault (struct vm_entry *vme)
 	}
 	else
 		return false;
-} 
+}
+#endif

@@ -10,7 +10,9 @@
 #include "filesys/filesys.h"
 #include "filesys/inode.h"
 #include "filesys/off_t.h"
+#ifdef VM
 #include "vm/page.h"
+#endif
 
 static int arg_size[SYS_MAX_NUM];
 
@@ -59,16 +61,21 @@ syscall_init (void)
 /* check whether given address is user area;
 otherwise exit process (i.e., inbetween 0x8048000~0xc0000000) */
 void chk_address(void *addr){
+	#ifdef VM
 	if (!(is_user_vaddr (addr) && addr >= (void *)0x08048000UL && find_vme (addr)))
 		exit(-1);
+	#else
+if (!(is_user_vaddr (addr) && addr >= (void *)0x08048000UL))
+		exit(-1);
+	#endif
 }
 
 static void get_argument(void *esp, int *arg, int count){
   ASSERT (1 <= count && count <= 4);
   while (count--)
   {
-    check_address4 (++esp);
-    *(args++) = *esp;
+    check_address (++esp);
+    *(arg++) = *esp;
   }
 }
 
