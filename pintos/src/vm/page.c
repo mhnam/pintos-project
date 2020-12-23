@@ -93,8 +93,6 @@ vm_destroy_func (struct hash_elem *e, void *aux UNUSED)
 {
   ASSERT (e != NULL);
   struct vm_entry *vme = hash_entry (e, struct vm_entry, elem);
-  free_page_vaddr(vme->vaddr);
-  swap_clear(vme->swap_slot);
   free(vme);
 }
 
