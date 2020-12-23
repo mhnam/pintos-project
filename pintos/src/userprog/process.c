@@ -154,8 +154,6 @@ process_exit (void)
   struct thread *cur = thread_current ();
   uint32_t *pd;
 
-	palloc_free_page(cur->fd);
-
 	#ifdef VM
 		/* Destroy the current process's supplemental page table. */
 		vm_destroy(&cur->vm);
@@ -575,7 +573,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
       zero_bytes -= page_zero_bytes;
       upage += PGSIZE;
 			#ifdef VM
-				ofs += PGSIZE;
+				ofs += page_read_bytes;
 			#endif
 	}
   return true;
@@ -588,48 +586,45 @@ setup_stack (void **esp)
 {
   uint8_t *kpage;
   bool success = false;
+	kpage = palloc_get_page (PAL_USER | PAL_ZERO);
 	
 	#ifdef VM
-	struct vm_entry *vme = (struct vm_entry *)malloc(sizeof(struct vm_entry));
-	if(!vme)
-		return false;
-	
-	kpage = palloc_get_page (PAL_USER | PAL_ZERO);
 	void *upage = ((uint8_t *) PHYS_BASE) - PGSIZE;
+  if (kpage != NULL){
+		success = install_page(upage, kpage, true);
+	}
 	
-	#else
-	kpage = palloc_get_page (PAL_USER | PAL_ZERO);
+	if(success){
+		struct vm_entry *vme = (struct vm_entry *)malloc(sizeof(struct vm_entry));
+		if(!vme)
+			return false;
+		else{
+			*esp = PHYS_BASE;
+
+			memset(vme, 0, sizeof(struct vm_entry));
+			vme->type = VM_ANON;
+			vme->vaddr = upage;
+			vme->writable = true;
+			vme->is_loaded = true;
+
+			insert_vme (&thread_current()->vm, vme);
+		}
+	}
+	else
+		palloc_free_page(kpage);
 	
-	#endif
-	
+	#else	
   if (kpage != NULL) 
     {
-		#ifdef VM
-		success = install_page(upage, kpage, true);
-		if(!success){
-			palloc_free_page(kpage);
-			free(vme);
-		}
-
-		*esp = PHYS_BASE;
-
-		memset(vme, 0, sizeof(struct vm_entry));
-		vme->type = VM_ANON;
-		vme->vaddr = upage;
-		vme->writable = true;
-		vme->is_loaded = true;
-
-		insert_vme (&thread_current()->vm, vme);
-
-		#else
 		success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
 		
     if (success)
 			*esp = PHYS_BASE;
 		else
 			palloc_free_page (kpage);
-		#endif
     }
+	
+	#endif
   return success;
 }
 

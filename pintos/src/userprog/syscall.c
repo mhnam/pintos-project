@@ -32,8 +32,8 @@ THINGS TO DO:
 *****/
 
 /*handler*/
-void chk_address(struct intr_frame *f);
-static void get_argument(void *esp, int *arg, int count);
+void chk_address(void *addr);
+//static void get_argument(void *esp, int *arg, int count);
 static void syscall_handler(struct intr_frame *);
 
 void
@@ -69,7 +69,7 @@ if (!(is_user_vaddr (addr) && addr >= (void *)0x08048000UL))
 		exit(-1);
 	#endif
 }
-
+/*
 static void get_argument(void *esp, int *arg, int count){
   ASSERT (1 <= count && count <= 4);
   while (count--)
@@ -78,7 +78,7 @@ static void get_argument(void *esp, int *arg, int count){
     *(arg++) = *esp;
   }
 }
-
+*/
 static void
 syscall_handler (struct intr_frame *f) 
 {
