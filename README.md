@@ -12,15 +12,15 @@ Implemented ``system call handler`` by modifying ``process.c`` and ``syscall.c``
 
 SEE https://github.com/mhnam/pintosOS/blob/main/syscall.md
 
-### Project #2: Filesystem
+#### Project #2: Filesystem
 Implemented ``filesystem`` adding ``additional system calls``, which is leftover from project 2 in pintos mannual.
 
 SEE https://github.com/mhnam/pintosOS/blob/main/filesys.md
 
-### Project #3: Threads
+#### Project #3: Threads
 Implemented ``alarm clock`` and ``priority scheduling`` with ``advanced scheduler`` by modifying files mostly in ``src/threads``, which is a project 1 in pintos mannual.
 
 SEE https://github.com/mhnam/pintosOS/blob/main/threads.md
 
-## Project #4: Virtual Memory
+#### Project #4: Virtual Memory
 Will implement ``virtual memory``, which is a project 3 in pintos mannual
