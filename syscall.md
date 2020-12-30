@@ -5,24 +5,24 @@
 ## 개발 범위 및 내용
 ## 개발 범위
 ### 1. Argument Passing
-사용자로부터 띄어쓰기로 구분되어 있는 명령어 조합을 입력을 입력으로 받으면, 띄어쓰기를 기준으로 명령어를 구분하여 자르고, 유저의 가상메모리 영역의 스택에 각각의 명령어를 80x86 calling convention에 따라 쌓는다.
+사용자로부터 띄어쓰기로 구분되어 있는 명령어 조합을 입력을 입력으로 받으면, 띄어쓰기를 기준으로 명령어를 구분하여 자르고, 유저의 가상메모리 영역의 스택에 각각의 명령어를 ``80x86 calling convention``에 따라 쌓는다.
 
 ### 2. User Memory Access
 유저프로그램이 실행되는 과정에서 시스템 콜이 발생하면, 커널 모드에서 처리해야하지만 운영체제의 안전성을 위하여 유저모드와 커널모드가 구분되어 있어, 유저 프로그램은 시스템 콜 번호와 시스템 콜을 처리하는데 필요한 파라미터들을 유저 가상 메모리 영역에 저장한다. 그러나 시스템 콜은 커널 모드에서 처리되므로 유저 메모리 영역에 접근이 필요하므로, 시스템 콜 요청시 유저 메모리 영역의 스택에 접근하여 필요한 argument를 가져온다. 더불어 유저 메모리에서 시스템 콜이 유저 영역이 아닌 커널 영역을 접근을 요청하는 경우에는 해당 프로세스를 즉시 종료하여 커널 영역을 보호한다.
 
 ### 3. System Calls
-유저프로그램에 의해 시스템 콜 요청될 때 System calls handler을 통해 요청된 시스템 콜에 적합한 내용이 처리될 수 있도록 만든다. 이때 시스템 콜은 halt, exit, exec, wait, read, write, fibonacci, max_of_four_int 총 8개로 한정하여 커널 모드에서 해당 요청을 수행하여 유저모드에 반환한다.
+유저프로그램에 의해 시스템 콜 요청될 때 System calls handler을 통해 요청된 시스템 콜에 적합한 내용이 처리될 수 있도록 만든다. 이때 시스템 콜은 ``halt, exit, exec, wait, read, write, fibonacci, max_of_four_int`` 총 8개로 한정하여 커널 모드에서 해당 요청을 수행하여 유저모드에 반환한다.
 
 ## 개발 내용
 ### 1. Argument Passing
-커널 내 스택에 argument를 쌓는 과정은 다음과 같다. 먼저 사용자로 부터 받은 명령어 집합을 띄어쓰기 단위로 분리하여, 마지막 argument으로 부터 유저 스택에 쌓아 올린다. 이후에 모든 argument가 스택에 쌓인 다음 4비트식 스택 접근을 용이하기 하게 만들기 위하여, 4비트 단위로 끝나지 않는 경우에는 모자른 개수만큼 0을 넣는다. 이후에 각 argument의 시작 주소를 쌓아준다. 이때 마지막 argument는 실제 사용자가 입력한 argument가 아닌 NULL pointer sentinel이다. 그 이후에는 첫번째 argument의 주소를 담고 있는 포인터를 스택에 쌓고, argument의 개수와 fake return address 0을 넣어 마무리 짓는다.
+커널 내 스택에 ``argument``를 쌓는 과정은 다음과 같다. 먼저 사용자로 부터 받은 명령어 집합을 띄어쓰기 단위로 분리하여, 마지막 ``argument``으로 부터 유저 스택에 쌓아 올린다. 이후에 모든 ``argument``가 스택에 쌓인 다음 4비트식 스택 접근을 용이하기 하게 만들기 위하여, 4비트 단위로 끝나지 않는 경우에는 모자른 개수만큼 0을 넣는다. 이후에 각 ``argument``의 시작 주소를 쌓아준다. 이때 마지막 ``argument``는 실제 사용자가 입력한 ``argument``가 아닌 ``NULL pointer sentinel``이다. 그 이후에는 첫번째 ``argument``의 주소를 담고 있는 포인터를 스택에 쌓고, ``argument``의 개수와 ``fake return address 0``을 넣어 마무리 짓는다.
 
 ### 2. User Memory Access
-1) Pintos 상에서의 invalid memory access 개념
+1) Pintos 상에서의 ``invalid memory access`` 개념
 Pintos 상에서 유저프로그램이 프로세스로 등록이 되면 각 프로세스마다 4GB짜리 유저 가상 메모리가 생긴다. 3GB를 physical baseline로서 0GB부터 3GB를 유저 영역에 매핑시키고, 그 이상의 3GB부터 4GB 영역까지를 커널 영역에 매핑되도록 구성되어 있다. 따라서 유저 프로그램이 커널 영역 즉 Phyisical baseline 위의 영역의 메모리를 접근하는 것은 곧 커널 영역에 접근하는 것이므로, invalid memory access 상황이라고 볼 수 있다.
 
-2) Invalid memory access를 막기 위한 방법
-앞서 설명한 Pintos 상에서 각 프로세스의 가상 메모리를 관리하는 방식에 따라서, 유저 가상 메모리 영역에서 해당 메모리 주소가 Physical baseline보다 아래에 있는지를 확인함으로써 커널 영역이 아닌 유저메모리를 정상적으로 접근하여 invalid memory access가 아님을 보장받을 수 있다. 이는 ``/src/threads/vaddr.c``에 있는 ``is_user_vaddr( )`` 함수를 활용하면 용이하다.
+2) ``Invalid memory access``를 막기 위한 방법
+앞서 설명한 ``Pintos`` 상에서 각 프로세스의 가상 메모리를 관리하는 방식에 따라서, 유저 가상 메모리 영역에서 해당 메모리 주소가 ``Physical baseline``보다 아래에 있는지를 확인함으로써 커널 영역이 아닌 유저메모리를 정상적으로 접근하여 ``invalid memory access``가 아님을 보장받을 수 있다. 이는 ``/src/threads/vaddr.c``에 있는 ``is_user_vaddr( )`` 함수를 활용하면 용이하다.
 
 ### 3. System Calls
 #### 시스템 콜의 필요성
@@ -30,23 +30,23 @@ Pintos 상에서 유저프로그램이 프로세스로 등록이 되면 각 프�
 
 #### 이번 프로젝트에서 개발할 시스템 콜
 본 프로젝트에서는 아래 6가지 기본적인 시스템 콜과 2가지 추가적인 시스템 콜을 구현한다. 구체적인 시스템 콜의 내용은 다음과 같다.
-- halt: halt( )는 핀토스를 종료시키는 시스템 콜이다.
-- exit: exit(exit status)는 현재 실행중인 유저 프로그램을 종료시키고, exit status를 부모 process에 알리며, 해당 process가 사용하던 모든 자원을 반환하고, 콘솔 창에 exit status를 알려주는 메시지가 출력하도록 하는 시스템 콜이다.
-- exec: exec(file)는 새로운 자식 process가 생성하고, 해당 사용자 프로그램 (file)이 실행되도록 하는 시스템 콜이다.
-- wait: wait(pid)는 부모 thread가 자식 thread의 일을 마칠 때까지 기다리도록 하는 시스템 콜로서, 우선 pid가 유효한 자식 thread id 인지를 확인한 후, 자식 thread가 일을 마칠때까지 기다린 후, 종료되면 exit status를 가져오는 시스템 콜이다.
-- read: read(fd, *buffer, length)는 사용자 프로그램으로부터 입력받은 내용을 standard input으로 읽어드리는 시스템 콜이다.
-- write: write(fd, *buffer, length)는 사용자 프로그램으로부터 입력받은 내용을 standard output으로 콘솔 창에 띄워주는 시스템 콜이다.
-- fibonacci: fibonacci(n)은 n번째 피보나치 수열의 결과를 반환해주는 시스템 콜이다.
-- max_of_four_int: max_of_four_int(a, b, c, d)는 4개의 정수를 입력으로 받아, 그 중에서 가장 큰 정수를 받환해주는 시스템 콜이다.
+- ``halt``: halt( )는 핀토스를 종료시키는 시스템 콜이다.
+- ``exit``: exit(exit status)는 현재 실행중인 유저 프로그램을 종료시키고, exit status를 부모 process에 알리며, 해당 process가 사용하던 모든 자원을 반환하고, 콘솔 창에 exit status를 알려주는 메시지가 출력하도록 하는 시스템 콜이다.
+- ``exec``: exec(file)는 새로운 자식 process가 생성하고, 해당 사용자 프로그램 (file)이 실행되도록 하는 시스템 콜이다.
+- ``wait``: wait(pid)는 부모 thread가 자식 thread의 일을 마칠 때까지 기다리도록 하는 시스템 콜로서, 우선 pid가 유효한 자식 thread id 인지를 확인한 후, 자식 thread가 일을 마칠때까지 기다린 후, 종료되면 exit status를 가져오는 시스템 콜이다.
+- ``read``: read(fd, *buffer, length)는 사용자 프로그램으로부터 입력받은 내용을 standard input으로 읽어드리는 시스템 콜이다.
+- ``write``: write(fd, *buffer, length)는 사용자 프로그램으로부터 입력받은 내용을 standard output으로 콘솔 창에 띄워주는 시스템 콜이다.
+- ``fibonacci``: fibonacci(n)은 n번째 피보나치 수열의 결과를 반환해주는 시스템 콜이다.
+- ``max_of_four_int``: max_of_four_int(a, b, c, d)는 4개의 정수를 입력으로 받아, 그 중에서 가장 큰 정수를 받환해주는 시스템 콜이다.
 
 #### 시스템 콜 진행 과정
 유저 레벨에서 시스템 콜 API를 호출한 이후 커널을 거쳐 다시 유저 레벨로 돌아올 때까지 과정은 다음과 같은 순서로 진행된다.
-•	``/src/examples/``에 있는 유저 프로그램에서 OS상의 도움이 필요한 작업에 대한 함수를 호출한다.
-•	호출된 함수는 ``/src/lib/user/syscall.c`` 파일 내에 정의되어 있으며, 구체적으로 각 함수는 유저모드에서 유저 스택에 시스템 콜 번호와 argument를 push하여 저장한 이후에 interrupt를 걸어 커널 모드에 시스템 콜이 발생했음을 알려준다.
-•	``Interrupt``가 걸리면 ``/src/threads/intr-stubs.s`` 어셈블리 파일에 의해 ``/src/threads/interrupt.c``에 있는 ``interrupt handler``가 수행되도록 한다. 이 ``interrupt handler``에 의하여 시스템 콜에 의한 interrupt를 수행하기 위한 service routine 즉, system call handler로 넘어간다.
-•	``System callhandler``는 ``/src/userprog/syscall.c``에 있는 ``syscall_handler( )`` 함수에 의하여 시스템 콜의 요구사항을 수행하도록 한다. 이때 ``systemcall handler``는 ``interrupt frame`` 내에 있는 ``esp`` 포인터, 즉 유저 스택의 ``system call`` 번호를 저장한 곳의 위치를 가리키는 포인터를 이용하여 어떤 시스템 콜인지, 무슨 ``argument``가 왔는지를 확인할 수 있다.
-•	``Systemcall handler``에 의해 시스템 콜을 처리한 이후에는 역시 ``interrupt frame``의 ``eax`` 변수에 저장하여 ``return`` 해줌으로써 ``eax`` 레지스터에 반환 값을 저장할 수 있고, 이에 따라 유저 모드에서도 시스템 콜의 결과를 확인할 수 있는 것이다.
-•	모든 시스템 콜이 처리된 이후에는 다시 ``/src/lib/user/syscall.c`` 파일 내에 있는 함수에 의해 유저 스택에 쌓고 표시한 esp 포인터를 다시 복원함으로써 본래 상태로 돌아가며, 그 반환 값은 ``eax`` 레지스터에 보관되어 있다.
+-	``/src/examples/``에 있는 유저 프로그램에서 OS상의 도움이 필요한 작업에 대한 함수를 호출한다.
+-	호출된 함수는 ``/src/lib/user/syscall.c`` 파일 내에 정의되어 있으며, 구체적으로 각 함수는 유저모드에서 유저 스택에 시스템 콜 번호와 argument를 push하여 저장한 이후에 interrupt를 걸어 커널 모드에 시스템 콜이 발생했음을 알려준다.
+-	``Interrupt``가 걸리면 ``/src/threads/intr-stubs.s`` 어셈블리 파일에 의해 ``/src/threads/interrupt.c``에 있는 ``interrupt handler``가 수행되도록 한다. 이 ``interrupt handler``에 의하여 시스템 콜에 의한 interrupt를 수행하기 위한 service routine 즉, system call handler로 넘어간다.
+-	``System callhandler``는 ``/src/userprog/syscall.c``에 있는 ``syscall_handler( )`` 함수에 의하여 시스템 콜의 요구사항을 수행하도록 한다. 이때 ``systemcall handler``는 ``interrupt frame`` 내에 있는 ``esp`` 포인터, 즉 유저 스택의 ``system call`` 번호를 저장한 곳의 위치를 가리키는 포인터를 이용하여 어떤 시스템 콜인지, 무슨 ``argument``가 왔는지를 확인할 수 있다.
+-	``Systemcall handler``에 의해 시스템 콜을 처리한 이후에는 역시 ``interrupt frame``의 ``eax`` 변수에 저장하여 ``return`` 해줌으로써 ``eax`` 레지스터에 반환 값을 저장할 수 있고, 이에 따라 유저 모드에서도 시스템 콜의 결과를 확인할 수 있는 것이다.
+-	모든 시스템 콜이 처리된 이후에는 다시 ``/src/lib/user/syscall.c`` 파일 내에 있는 함수에 의해 유저 스택에 쌓고 표시한 esp 포인터를 다시 복원함으로써 본래 상태로 돌아가며, 그 반환 값은 ``eax`` 레지스터에 보관되어 있다.
 
 ## 개발 방법
 ### 1. Argument Passing
